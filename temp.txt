@@ -1,0 +1,16 @@
+
+  templates\theme\sidebar.html:99:              <i class="fa-solid fa-user"></i>
+  templates\theme\sidebar.html:100:            </span>
+> templates\theme\sidebar.html:101:            <span class="nav-link-title">My Profile</span>
+  templates\theme\sidebar.html:102:          </a>
+  templates\theme\sidebar.html:103:        </li>
+  templates\theme\sidebar.html:104:
+  templates\theme\sidebar.html:105:        {% if user.is_authenticated %}
+  templates\theme\sidebar.html:106:        <li class="nav-item d-lg-none">
+  templates\theme\sidebar.html:107:          <a class="nav-link" href="{% url 'logout' %}">
+  templates\theme\sidebar.html:108:            <span class="nav-link-icon d-md-none d-lg-inline-block">
+  templates\theme\sidebar.html:109:              <i class="nav-icon fas fa-sign-out-alt"></i>
+  templates\theme\sidebar.html:110:            </span>
+  templates\theme\sidebar.html:111:            <span class="nav-link-title">Logout</span>
+
+

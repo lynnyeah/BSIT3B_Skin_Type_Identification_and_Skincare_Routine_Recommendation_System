@@ -5,6 +5,7 @@
 
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 
 class SkinProfile(models.Model):
@@ -28,6 +29,8 @@ class SkinProfile(models.Model):
         default="unknown",
     )
     concerns = models.TextField(blank=True)
+    sensitivities = models.TextField(blank=True)
+    skincare_goals = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -136,6 +139,8 @@ class RoutineStep(models.Model):
     )
     step_number = models.PositiveIntegerField()
     instructions = models.TextField(blank=True)
+    duration_minutes = models.PositiveIntegerField(default=1)
+    tip = models.TextField(blank=True)
 
     class Meta:
         ordering = ["step_number"]
@@ -148,3 +153,76 @@ class RoutineStep(models.Model):
 
     def __str__(self):
         return f"{self.routine.name} - Step {self.step_number}"
+
+
+class RoutineProgress(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="routine_progress",
+    )
+    routine = models.ForeignKey(
+        SkincareRoutine,
+        on_delete=models.CASCADE,
+        related_name="progress_entries",
+    )
+    date = models.DateField(default=timezone.now)
+    completed_steps = models.JSONField(default=list, blank=True)
+    completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = [["user", "routine", "date"]]
+
+    def __str__(self):
+        return f"{self.user} - {self.routine.name} - {self.date}"
+
+
+# Import timezone for RoutineProgress
+from django.utils import timezone
+
+
+class UserProfile(models.Model):
+    GENDER_CHOICES = [
+        ('male', 'Male'),
+        ('female', 'Female'),
+        ('other', 'Other'),
+        ('prefer_not_to_say', 'Prefer not to say'),
+    ]
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='user_profile',
+    )
+    date_of_birth = models.DateField(blank=True, null=True)
+    gender = models.CharField(max_length=20, choices=GENDER_CHOICES, blank=True)
+    location = models.CharField(max_length=255, blank=True)
+    phone = models.CharField(max_length=50, blank=True)
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.user.username} - Profile'
+
+
+
+class UserPreferences(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='preferences',
+    )
+    email_notifications = models.BooleanField(default=True)
+    push_notifications = models.BooleanField(default=True)
+    theme = models.CharField(max_length=10, default='light', choices=[('light', 'Light'), ('dark', 'Dark')])
+    profile_visibility = models.CharField(max_length=20, default='private', choices=[('public', 'Public'), ('private', 'Private')])
+    data_sharing = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.user.username} - Preferences'
+

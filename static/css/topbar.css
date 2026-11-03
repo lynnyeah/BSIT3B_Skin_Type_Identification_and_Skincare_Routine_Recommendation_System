@@ -1,0 +1,405 @@
+.dh-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+  display: flex;
+  align-items: center;
+  min-height: 3.9rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid rgba(92, 67, 56, 0.08);
+  background: rgba(247, 242, 238, 0.9);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.dh-topbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  background: transparent;
+}
+
+.dh-icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.65rem;
+  height: 2.65rem;
+  padding: 0;
+  border: 1px solid rgba(92, 67, 56, 0.12);
+  border-radius: 0.85rem;
+  background: #fffdfb;
+  color: #5c4338;
+  font-size: 0.95rem;
+  box-shadow: 0 1px 2px rgba(92, 67, 56, 0.04);
+  transition: background-color 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+}
+
+.dh-icon-btn:hover,
+.dh-icon-btn:focus-visible {
+  border-color: rgba(92, 67, 56, 0.2);
+  background: #f3e6de;
+  color: #4a352c;
+  transform: translateY(-1px);
+}
+
+.dh-icon-btn:focus-visible,
+.dh-account-btn:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 4px rgba(217, 169, 156, 0.28);
+}
+
+.dh-notif-badge {
+  position: absolute;
+  top: -0.28rem;
+  right: -0.28rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.28rem;
+  border: 2px solid #f7f2ee;
+  border-radius: 999px;
+  background: #c56b5a;
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.dh-account-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.65rem;
+  padding: 0.28rem 0.5rem 0.28rem 0.3rem;
+  border: 1px solid rgba(92, 67, 56, 0.12);
+  border-radius: 0.9rem;
+  background: #fffdfb;
+  color: #5c4338;
+  box-shadow: 0 1px 2px rgba(92, 67, 56, 0.04);
+  transition: background-color 0.16s ease, border-color 0.16s ease;
+}
+
+.dh-account-btn:hover {
+  border-color: rgba(92, 67, 56, 0.2);
+  background: #f9f1eb;
+  color: #4a352c;
+}
+
+.dh-account-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.05rem;
+  height: 2.05rem;
+  border-radius: 0.68rem;
+  overflow: hidden;
+  background: linear-gradient(145deg, #7d5c4d, #4a352c);
+  color: #fffaf6;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  flex: 0 0 auto;
+}
+
+.dh-account-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dh-account-meta {
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 9.5rem;
+  line-height: 1.15;
+}
+
+.dh-account-name,
+.dh-account-role {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dh-account-name {
+  color: #4a352c;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.dh-account-role {
+  margin-top: 0.15rem;
+  color: #9b8276;
+  font-size: 0.66rem;
+  font-weight: 500;
+}
+
+.dh-account-caret {
+  margin: 0 0.2rem;
+  color: #a88f83;
+  font-size: 0.58rem;
+}
+
+.dh-topbar .dropdown {
+  position: relative;
+}
+
+.dh-topbar-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: auto;
+  z-index: 1050;
+  display: none;
+  float: none;
+  min-width: 19rem;
+  margin-top: 0.55rem !important;
+  padding: 0.45rem;
+  border: 1px solid rgba(92, 67, 56, 0.12);
+  border-radius: 1rem;
+  background: #fffdfb;
+  box-shadow:
+    0 2px 4px rgba(92, 67, 56, 0.04),
+    0 24px 48px -18px rgba(92, 67, 56, 0.32);
+}
+
+.dh-topbar-menu.show {
+  display: block;
+}
+
+.dh-notifications-menu {
+  width: 22rem;
+  max-width: calc(100vw - 1.5rem);
+}
+
+.dh-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.6rem 0.6rem;
+  color: #4a352c;
+  font-size: 0.79rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.dh-menu-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #f3e6de;
+  color: #7d5c4d;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.dh-notification-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.dh-notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.65rem 0.6rem;
+  border-radius: 0.75rem;
+  color: #4a352c;
+  white-space: normal;
+}
+
+.dh-notification-item:hover,
+.dh-notification-item:focus {
+  background: #f9f1eb;
+  color: #4a352c;
+}
+
+.dh-notification-read {
+  display: none;
+}
+
+.dh-notification-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.7rem;
+  font-size: 0.82rem;
+  flex: 0 0 auto;
+}
+
+.dh-tone-rose {
+  background: #fbeae6;
+  color: #b45f52;
+}
+
+.dh-tone-sage {
+  background: #e8f0e4;
+  color: #5f7c52;
+}
+
+.dh-tone-sand {
+  background: #f6ecdd;
+  color: #9b7642;
+}
+
+.dh-notification-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.dh-notification-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.dh-notification-text {
+  color: #8b7469;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.dh-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 1.5rem 1rem;
+  color: #9b8276;
+  font-size: 0.76rem;
+  text-align: center;
+}
+
+.dh-empty-state i {
+  color: #c4aea3;
+  font-size: 1.15rem;
+}
+
+.dh-account-menu {
+  width: 18.5rem;
+}
+
+.dh-account-header {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.6rem 0.7rem;
+}
+
+.dh-account-avatar-lg {
+  width: 2.65rem;
+  height: 2.65rem;
+  border-radius: 0.8rem;
+  font-size: 0.85rem;
+}
+
+.dh-account-header-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dh-account-header-name,
+.dh-account-header-email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dh-account-header-name {
+  color: #4a352c;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.dh-account-header-email {
+  margin-top: 0.2rem;
+  color: #9b8276;
+  font-size: 0.7rem;
+}
+
+.dh-menu-divider {
+  height: 1px;
+  margin: 0.3rem 0.45rem;
+  background: rgba(92, 67, 56, 0.09);
+}
+
+.dh-menu-link {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.58rem 0.6rem;
+  border-radius: 0.65rem;
+  color: #5c4338;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.dh-menu-link i {
+  width: 1rem;
+  color: #a88f83;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.dh-menu-link:hover,
+.dh-menu-link:focus {
+  background: #f9f1eb;
+  color: #4a352c;
+}
+
+.dh-menu-link-danger {
+  color: #a65448;
+}
+
+.dh-menu-link-danger i {
+  color: #c17a6e;
+}
+
+.dh-menu-link-danger:hover,
+.dh-menu-link-danger:focus {
+  background: #fdf1ee;
+  color: #94473c;
+}
+
+@media (max-width: 575.98px) {
+  .dh-topbar {
+    min-height: 3.5rem;
+    padding: 0.45rem 0;
+  }
+
+  .dh-icon-btn {
+    width: 2.45rem;
+    height: 2.45rem;
+  }
+
+  .dh-account-btn {
+    min-height: 2.45rem;
+  }
+
+  .dh-account-avatar {
+    width: 1.9rem;
+    height: 1.9rem;
+  }
+
+  .dh-notifications-menu {
+    width: calc(100vw - 1.5rem);
+  }
+}

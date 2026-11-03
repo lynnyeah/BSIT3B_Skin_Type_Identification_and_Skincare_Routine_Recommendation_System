@@ -1,0 +1,483 @@
+{% extends "theme/base.html" %}
+{% load static %}
+
+{% block title %}Routine Planner{% endblock title %}
+
+{% block extra_css %}
+<style>
+  body,
+  .page,
+  .page-wrapper,
+  .page-body,
+  .container-xl {
+    background-color: #f7f2ee !important;
+  }
+
+  .routine-page {
+    --routine-brown: #5c4338;
+    --routine-brown-light: rgba(92, 67, 56, 0.72);
+    --routine-accent: #d9a99c;
+    --routine-accent-strong: #cd9c8b;
+    --routine-border: rgba(92, 67, 56, 0.12);
+    color: var(--routine-brown);
+  }
+
+  .routine-page .page-title {
+    color: var(--routine-brown);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .routine-page .text-muted {
+    color: var(--routine-brown-light) !important;
+  }
+
+  .routine-card {
+    border-radius: 1rem;
+    border: 1px solid var(--routine-border);
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(92, 67, 56, 0.02), 0 12px 30px -16px rgba(92, 67, 56, 0.4);
+    overflow: hidden;
+  }
+
+  .routine-card .card-header {
+    background: transparent;
+    border-bottom: 1px solid var(--routine-border);
+    padding: 1rem 1.4rem;
+  }
+
+  .routine-card .card-body {
+    padding: 1.3rem 1.4rem;
+  }
+
+  .day-pill {
+    border-radius: 999px;
+    border: 1px solid var(--routine-border);
+    color: var(--routine-brown-light);
+    background: transparent;
+    padding: 0.4rem 0.9rem;
+    font-weight: 600;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    min-width: 3.2rem;
+  }
+
+  .day-pill.active {
+    background: linear-gradient(135deg, var(--routine-accent) 0%, var(--routine-accent-strong) 100%);
+    border-color: transparent;
+    color: #ffffff;
+  }
+
+  .day-pill.completed {
+    border-color: rgba(205, 156, 139, 0.8);
+    color: var(--routine-brown);
+  }
+
+  .badge-progress {
+    border-radius: 999px;
+    background: rgba(217, 169, 156, 0.24);
+    color: var(--routine-brown);
+    padding: 0.3rem 0.8rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+
+  .step-item {
+    border-radius: 0.9rem;
+    border: 1px solid var(--routine-border);
+    padding: 0.9rem 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
+  }
+
+  .step-item + .step-item {
+    margin-top: 0.8rem;
+  }
+
+  .step-check {
+    width: 1.2rem;
+    height: 1.2rem;
+    margin-top: 0.2rem;
+    accent-color: var(--routine-accent-strong);
+  }
+
+  .step-number {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: rgba(217, 169, 156, 0.24);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--routine-brown);
+    flex-shrink: 0;
+  }
+
+  .step-tag {
+    border-radius: 999px;
+    background: rgba(92, 67, 56, 0.08);
+    color: var(--routine-brown);
+    padding: 0.2rem 0.7rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .streak-bar {
+    height: 0.5rem;
+    border-radius: 999px;
+    background: rgba(92, 67, 56, 0.12);
+    overflow: hidden;
+  }
+
+  .streak-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--routine-accent) 0%, var(--routine-accent-strong) 100%);
+  }
+
+  .week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.4rem;
+    text-align: center;
+  }
+
+  .week-day {
+    font-size: 0.85rem;
+    color: var(--routine-brown-light);
+  }
+
+  .week-cell {
+    border-radius: 0.6rem;
+    border: 1px solid var(--routine-border);
+    padding: 0.4rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--routine-brown-light);
+  }
+
+  .week-cell.done {
+    background: rgba(217, 169, 156, 0.24);
+    color: var(--routine-brown);
+    border-color: transparent;
+  }
+
+  .btn-warm-primary {
+    border-radius: 0.8rem;
+    border: none;
+    background: linear-gradient(135deg, var(--routine-accent) 0%, var(--routine-accent-strong) 100%);
+    color: #ffffff;
+    font-weight: 600;
+    padding: 0.6rem 1.2rem;
+  }
+
+  .btn-warm-primary:hover {
+    background: linear-gradient(135deg, #e4b5a8 0%, #d49d90 100%);
+    color: #ffffff;
+  }
+
+  .note-box {
+    border-radius: 0.9rem;
+    border: 1px solid var(--routine-border);
+    background: linear-gradient(140deg, #f7f2ee 0%, #f3e7e1 100%);
+    padding: 0.9rem 1rem;
+  }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="routine-page" id="routine-page" data-date="{{ selected_date|date:'Y-m-d' }}">
+  <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+    <div>
+      <h2 class="page-title mb-1">Routine Planner</h2>
+      <div class="text-muted">Track your morning and evening skincare steps, monitor consistency, and build healthy skin habits.</div>
+    </div>
+    <span class="badge-progress">{{ overall_completed }}/{{ overall_total }} steps today · {{ overall_percent }}%</span>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-8">
+      <div class="card routine-card mb-3">
+        <div class="card-body">
+          <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
+            <div class="d-flex flex-wrap gap-2" id="day-pills-container">
+              {% for day in week_days %}
+                <a href="{% url 'routine_planner' %}?date={{ day.iso }}"
+                   class="btn day-pill {% if day.is_selected %}active{% endif %} {% if day.done_am or day.done_pm %}completed{% endif %}"
+                   title="{{ day.date|date:'F d, Y' }}">
+                  <span>{{ day.label }}</span>
+                  <small>{{ day.number }}</small>
+                </a>
+              {% endfor %}
+            </div>
+            <div class="text-muted small">
+              {{ selected_date|date:"F d, Y" }}{% if selected_date == today %} · Today{% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% for routine in morning_routines %}
+        <div class="card routine-card mb-3" id="routine-{{ routine.id }}">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+              <div class="step-number" style="background: rgba(245, 208, 97, 0.3);"><i class="fa-solid fa-sun"></i></div>
+              <h5 class="mb-0" style="font-weight: 700;">{{ routine.name }}</h5>
+            </div>
+            <span class="badge-progress routine-progress" data-routine-badge="{{ routine.id }}">{{ routine.completed_count }}/{{ routine.total_steps }} Steps Completed</span>
+          </div>
+          <div class="card-body">
+            {% for step in routine.steps.all %}
+              <div class="step-item">
+                <input class="step-check" type="checkbox"
+                       data-routine-id="{{ routine.id }}"
+                       data-step-id="{{ step.id }}"
+                       {% if routine.progress and step.id in routine.progress.completed_steps %}checked{% endif %}>
+                <div class="step-number">{{ step.step_number }}</div>
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div class="fw-semibold" style="color: var(--routine-brown);">{{ step.product.category|title }}: {{ step.product.name }}</div>
+                    <span class="step-tag">{{ step.product.category|title }}</span>
+                  </div>
+                  <div class="text-muted small">{{ step.instructions|default:step.product.description }}</div>
+                  {% if step.tip %}<div class="text-muted small mt-1"><i class="fa-solid fa-lightbulb me-1"></i>{{ step.tip }}</div>{% endif %}
+                </div>
+              </div>
+            {% empty %}
+              <p class="text-muted mb-0">No steps yet. Add one with the button below.</p>
+            {% endfor %}
+          </div>
+        </div>
+      {% empty %}
+        <div class="card routine-card mb-3">
+          <div class="card-body text-muted">Your morning routine is being prepared. Take the skin analysis to personalise it.</div>
+        </div>
+      {% endfor %}
+
+      {% for routine in evening_routines %}
+        <div class="card routine-card mb-3" id="routine-{{ routine.id }}">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+              <div class="step-number" style="background: rgba(124, 130, 245, 0.2);"><i class="fa-solid fa-moon"></i></div>
+              <h5 class="mb-0" style="font-weight: 700;">{{ routine.name }}</h5>
+            </div>
+            <span class="badge-progress routine-progress" data-routine-badge="{{ routine.id }}">{{ routine.completed_count }}/{{ routine.total_steps }} Steps Completed</span>
+          </div>
+          <div class="card-body">
+            {% for step in routine.steps.all %}
+              <div class="step-item">
+                <input class="step-check" type="checkbox"
+                       data-routine-id="{{ routine.id }}"
+                       data-step-id="{{ step.id }}"
+                       {% if routine.progress and step.id in routine.progress.completed_steps %}checked{% endif %}>
+                <div class="step-number">{{ step.step_number }}</div>
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div class="fw-semibold" style="color: var(--routine-brown);">{{ step.product.category|title }}: {{ step.product.name }}</div>
+                    <span class="step-tag">{{ step.product.category|title }}</span>
+                  </div>
+                  <div class="text-muted small">{{ step.instructions|default:step.product.description }}</div>
+                  {% if step.tip %}<div class="text-muted small mt-1"><i class="fa-solid fa-lightbulb me-1"></i>{{ step.tip }}</div>{% endif %}
+                </div>
+              </div>
+            {% empty %}
+              <p class="text-muted mb-0">No steps yet. Add one with the button below.</p>
+            {% endfor %}
+          </div>
+        </div>
+      {% empty %}
+        <div class="card routine-card mb-3">
+          <div class="card-body text-muted">Your evening routine is being prepared. Take the skin analysis to personalise it.</div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card routine-card mb-3">
+        <div class="card-header">
+          <h5 class="mb-0" style="font-weight: 700;">Routine Streak</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="fw-bold" style="font-size: 1.1rem;">🔥 {{ routine_streak }} Day Streak</div>
+            <div class="text-muted small">{% if routine_streak > 0 %}Keep going!{% else %}Start today!{% endif %}</div>
+          </div>
+          <div class="streak-bar mb-2">
+            <div class="streak-bar-fill" style="width: {{ streak_percent }}%;"></div>
+          </div>
+          <div class="text-muted small">
+            {% if routine_streak >= 7 %}You're building a strong habit. Keep it up!{% elif routine_streak > 0 %}Complete both routines to grow your streak.{% else %}Tick off every step to start your streak.{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="card routine-card mb-3">
+        <div class="card-header">
+          <h5 class="mb-0" style="font-weight: 700;">Weekly Consistency Tracker</h5>
+        </div>
+        <div class="card-body">
+          <div class="week-grid mb-2">
+            {% for day in week_days %}<div class="week-day">{{ day.label }}</div>{% endfor %}
+            {% for day in week_days %}
+              <div class="week-cell {% if day.done_am %}done{% endif %}" title="Morning · {{ day.date|date:'M d' }}">
+                <i class="fa-solid {% if day.done_am %}fa-check{% else %}fa-minus{% endif %}"></i>
+              </div>
+            {% endfor %}
+            {% for day in week_days %}
+              <div class="week-cell {% if day.done_pm %}done{% endif %}" title="Evening · {{ day.date|date:'M d' }}">
+                <i class="fa-solid {% if day.done_pm %}fa-check{% else %}fa-minus{% endif %}"></i>
+              </div>
+            {% endfor %}
+          </div>
+          <div class="d-flex justify-content-between text-muted small">
+            <span>AM row</span>
+            <span>PM row</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card routine-card mb-3">
+        <div class="card-header">
+          <h5 class="mb-0" style="font-weight: 700;">Routine Notes</h5>
+        </div>
+        <div class="card-body">
+          {% for note in routine_notes %}
+            <div class="note-box {% if not forloop.last %}mb-2{% endif %}">
+              <div class="d-flex align-items-start gap-2">
+                <i class="fa-solid fa-note-sticky" style="color: var(--routine-accent-strong); margin-top: 0.2rem;"></i>
+                <div class="small" style="color: var(--routine-brown);"><strong>{{ note.product }}:</strong> {{ note.tip }}</div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="note-box">
+              <div class="d-flex align-items-start gap-2">
+                <i class="fa-solid fa-note-sticky" style="color: var(--routine-accent-strong); margin-top: 0.2rem;"></i>
+                <div class="small" style="color: var(--routine-brown);">No product notes yet. Add products to your routine to see tips here.</div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-warm-primary w-100" data-bs-toggle="modal" data-bs-target="#addStepModal">
+        <i class="fa-solid fa-plus me-1"></i>Add Custom Routine Step
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="addStepModal" tabindex="-1" aria-labelledby="addStepModalTitle" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" id="add-step-form" style="border-radius: 1rem;">
+      {% csrf_token %}
+      <div class="modal-header">
+        <h5 class="modal-title" id="addStepModalTitle">Add Routine Step</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label" for="step-routine">Routine</label>
+          <select class="form-select" id="step-routine" name="routine_id" required>
+            {% for routine in morning_routines %}<option value="{{ routine.id }}">{{ routine.name }}</option>{% endfor %}
+            {% for routine in evening_routines %}<option value="{{ routine.id }}">{{ routine.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="step-product">Product</label>
+          <select class="form-select" id="step-product" name="product_id" required>
+            {% for product in all_products %}
+              <option value="{{ product.id }}">{{ product.category|title }} · {{ product.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="step-instructions">Instructions</label>
+          <textarea class="form-control" id="step-instructions" name="instructions" rows="2" placeholder="How should this step be applied?"></textarea>
+        </div>
+        <div class="mb-0">
+          <label class="form-label" for="step-duration">Duration (minutes)</label>
+          <input class="form-control" id="step-duration" name="duration_minutes" type="number" min="1" max="120" value="2">
+        </div>
+        <div class="alert alert-danger mt-3 mb-0 d-none" id="add-step-error"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-warm-primary">Add Step</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var page = document.getElementById('routine-page');
+    var pageDate = page ? page.dataset.date : '';
+    var csrfToken = document.querySelector('#add-step-form [name=csrfmiddlewaretoken]').value;
+
+    function postJson(url, payload) {
+      return fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify(payload)
+      }).then(function (response) {
+        return response.json().then(function (data) {
+          if (!response.ok) { throw new Error(data.error || 'Something went wrong.'); }
+          return data;
+        });
+      });
+    }
+
+    document.querySelectorAll('.step-check').forEach(function (checkbox) {
+      checkbox.addEventListener('change', function () {
+        checkbox.disabled = true;
+        postJson('{% url "toggle_step_completion" %}', {
+          routine_id: checkbox.dataset.routineId,
+          step_id: checkbox.dataset.stepId,
+          completed: checkbox.checked,
+          date: pageDate
+        }).then(function (data) {
+          var badge = document.querySelector('[data-routine-badge="' + checkbox.dataset.routineId + '"]');
+          if (badge) {
+            badge.textContent = data.completed + '/' + data.total + ' Steps Completed';
+          }
+        }).catch(function (error) {
+          checkbox.checked = !checkbox.checked;
+          window.alert(error.message);
+        }).finally(function () {
+          checkbox.disabled = false;
+        });
+      });
+    });
+
+    var addStepForm = document.getElementById('add-step-form');
+    addStepForm.addEventListener('submit', function (event) {
+      event.preventDefault();
+      var errorBox = document.getElementById('add-step-error');
+      errorBox.classList.add('d-none');
+      var submitButton = addStepForm.querySelector('[type=submit]');
+      submitButton.disabled = true;
+
+      postJson('{% url "add_routine_step" %}', {
+        routine_id: document.getElementById('step-routine').value,
+        product_id: document.getElementById('step-product').value,
+        instructions: document.getElementById('step-instructions').value,
+        duration_minutes: document.getElementById('step-duration').value
+      }).then(function () {
+        window.location.reload();
+      }).catch(function (error) {
+        errorBox.textContent = error.message;
+        errorBox.classList.remove('d-none');
+      }).finally(function () {
+        submitButton.disabled = false;
+      });
+    });
+  });
+</script>
+{% endblock content %}

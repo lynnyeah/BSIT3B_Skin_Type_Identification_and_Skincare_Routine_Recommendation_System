@@ -1,0 +1,116 @@
+<header class="dh-topbar">
+  <div class="container-xl dh-topbar-inner">
+    <div class="dropdown">
+      <button
+        class="dh-icon-btn"
+        type="button"
+        id="topbarNotifications"
+        data-dh-dropdown
+        aria-controls="topbarNotificationsMenu"
+        aria-haspopup="true"
+        aria-expanded="false"
+        aria-label="Notifications"
+        title="Notifications">
+        <i class="fa-regular fa-bell"></i>
+        {% if topbar_notification_count %}
+          <span class="dh-notif-badge">{{ topbar_notification_count }}</span>
+        {% endif %}
+      </button>
+
+      <div class="dropdown-menu dropdown-menu-end dh-topbar-menu dh-notifications-menu" id="topbarNotificationsMenu" aria-labelledby="topbarNotifications">
+        <div class="dh-menu-header">
+          <span>Notifications</span>
+          {% if topbar_notification_count %}
+            <span class="dh-menu-count">{{ topbar_notification_count }}</span>
+          {% endif %}
+        </div>
+
+        <div class="dh-notification-list" data-user-key="{{ request.user.pk }}">
+          {% for notification in topbar_notifications %}
+            <a class="dropdown-item dh-notification-item" href="{{ notification.url }}" data-notification-id="{{ notification.id }}">
+              <span class="dh-notification-icon dh-tone-{{ notification.tone }}">
+                <i class="{{ notification.icon }}"></i>
+              </span>
+              <span class="dh-notification-copy">
+                <span class="dh-notification-title">{{ notification.title }}</span>
+                <span class="dh-notification-text">{{ notification.message }}</span>
+              </span>
+            </a>
+          {% empty %}
+            <div class="dh-empty-state">
+              <i class="fa-regular fa-bell-slash"></i>
+              <span>You're all caught up.</span>
+            </div>
+          {% endfor %}
+          <div class="dh-empty-state d-none" data-notification-empty-read>
+            <i class="fa-regular fa-bell-slash"></i>
+            <span>You're all caught up.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dropdown">
+      <button
+        class="dh-account-btn"
+        type="button"
+        id="topbarAccount"
+        data-dh-dropdown
+        aria-controls="topbarAccountMenu"
+        aria-haspopup="true"
+        aria-expanded="false"
+        aria-label="Account menu">
+        <span class="dh-account-avatar">
+          {% if topbar_avatar_url %}
+            <img src="{{ topbar_avatar_url }}" alt="{{ topbar_display_name }}">
+          {% else %}
+            {{ topbar_initials }}
+          {% endif %}
+        </span>
+        <span class="dh-account-meta d-none d-md-flex">
+          <span class="dh-account-name">{{ topbar_display_name }}</span>
+          <span class="dh-account-role">{{ topbar_role }}</span>
+        </span>
+        <i class="fa-solid fa-chevron-down dh-account-caret d-none d-md-inline-block"></i>
+      </button>
+
+      <div class="dropdown-menu dropdown-menu-end dh-topbar-menu dh-account-menu" id="topbarAccountMenu" aria-labelledby="topbarAccount">
+        <div class="dh-account-header">
+          <span class="dh-account-avatar dh-account-avatar-lg">
+            {% if topbar_avatar_url %}
+              <img src="{{ topbar_avatar_url }}" alt="{{ topbar_display_name }}">
+            {% else %}
+              {{ topbar_initials }}
+            {% endif %}
+          </span>
+          <span class="dh-account-header-copy">
+            <span class="dh-account-header-name">{{ topbar_display_name }}</span>
+            <span class="dh-account-header-email">{{ request.user.email|default:request.user.username }}</span>
+          </span>
+        </div>
+
+        <div class="dh-menu-divider"></div>
+
+        <a class="dropdown-item dh-menu-link" href="{% url 'my_profile' %}">
+          <i class="fa-regular fa-user"></i>
+          <span>My profile</span>
+        </a>
+        <a class="dropdown-item dh-menu-link" href="{% url 'routine_planner' %}">
+          <i class="fa-solid fa-calendar-days"></i>
+          <span>Routine planner</span>
+        </a>
+        <a class="dropdown-item dh-menu-link" href="{% url 'assessment_history' %}">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span>Assessment history</span>
+        </a>
+
+        <div class="dh-menu-divider"></div>
+
+        <a class="dropdown-item dh-menu-link dh-menu-link-danger" href="{% url 'logout' %}">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          <span>Sign out</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</header>

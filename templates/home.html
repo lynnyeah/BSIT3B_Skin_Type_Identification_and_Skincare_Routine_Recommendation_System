@@ -1,545 +1,369 @@
 {% extends "theme/base.html" %}
 {% load static %}
 
-{% block content %}
+{% block title %}Dashboard{% endblock title %}
 
+{% block extra_css %}
 <style>
-    .skin-dashboard {
-        color: #263b32;
-        font-family: Arial, sans-serif;
-        padding: 10px 5px 30px;
-    }
+  body,
+  .page,
+  .page-wrapper,
+  .page-body,
+  #page-body,
+  .container-xl {
+    background-color: #f7f2ee !important;
+  }
 
-    .skin-dashboard .welcome {
-        margin-bottom: 25px;
-    }
+  .dash-container {
+    --dash-brown: #5c4338;
+    --dash-brown-light: rgba(92, 67, 56, 0.7);
+    --dash-border: rgba(92, 67, 56, 0.08);
+    --dash-card-bg: #ffffff;
+    color: var(--dash-brown);
+  }
 
-    .skin-dashboard .eyebrow {
-        color: #789080;
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-    }
+  .dash-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--dash-brown);
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
+  }
 
-    .skin-dashboard h2 {
-        font-size: 28px;
-        font-weight: 700;
-        color: #263b32;
-        margin: 6px 0;
-    }
+  .dash-subtitle {
+    color: var(--dash-brown-light);
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+  }
 
-    .skin-dashboard .subtitle {
-        color: #829087;
-        font-size: 14px;
-    }
+  .dash-card {
+    border-radius: 1rem;
+    border: 1px solid var(--dash-border);
+    background: var(--dash-card-bg);
+    box-shadow: 0 1px 2px rgba(92, 67, 56, 0.02), 0 10px 25px -14px rgba(92, 67, 56, 0.35);
+    margin-bottom: 1.25rem;
+  }
 
-    .skin-dashboard .dashboard-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 18px;
-        margin-bottom: 22px;
-    }
+  .dash-card-body {
+    padding: 1.5rem;
+  }
 
-    .skin-dashboard .skin-card,
-    .skin-dashboard .panel {
-        background: #fff;
-        border: 1px solid #e8eee8;
-        border-radius: 18px;
-        padding: 22px;
-        box-shadow: 0 5px 20px rgba(48, 76, 55, 0.04);
-    }
+  /* Skin Type Banner Card */
+  .skin-type-card {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #fffcf9 0%, #f7efe9 100%);
+  }
 
-    .skin-dashboard .metric-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        margin-bottom: 20px;
-    }
+  .skin-avatar-box {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: #f3e6de;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 2px solid rgba(217, 169, 156, 0.4);
+  }
 
-    .skin-dashboard .metric-icon {
-        width: 42px;
-        height: 42px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 13px;
-        font-size: 20px;
-        background: #eef8ed;
-    }
+  .skin-badge-tag {
+    background-color: #f3e6de;
+    color: var(--dash-brown);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+  }
 
-    .skin-dashboard .metric-value {
-        font-size: 25px;
-        font-weight: 700;
-    }
+  /* Action Cards */
+  .action-card {
+    background: linear-gradient(135deg, #fffcf9 0%, #fbf5f0 100%);
+    border: 1px solid var(--dash-border);
+    border-radius: 1rem;
+    padding: 1.25rem;
+    text-align: left;
+    height: 100%;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
 
-    .skin-dashboard .metric-label {
-        font-size: 15px;
-        font-weight: 600;
-        margin-bottom: 7px;
-    }
+  .action-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px -12px rgba(92, 67, 56, 0.4);
+  }
 
-    .skin-dashboard .metric-description {
-        color: #849087;
-        font-size: 12px;
-        line-height: 1.6;
-    }
+  .action-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.75rem;
+    background: #f3e6de;
+    color: var(--dash-brown);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    margin-bottom: 0.85rem;
+  }
 
-    .skin-dashboard .progress-track {
-        background: #edf1ed;
-        height: 6px;
-        border-radius: 10px;
-        margin: 15px 0 8px;
-        overflow: hidden;
-    }
+  .btn-warm-action {
+    color: var(--dash-brown);
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 1rem;
+  }
 
-    .skin-dashboard .progress-fill {
-        height: 100%;
-        border-radius: 10px;
-    }
+  .btn-warm-action:hover {
+    color: #3e2c24;
+  }
 
-    .skin-dashboard .elasticity {
-        background: #8474d9;
-        width: 75%;
-    }
+  /* Stat & Overview boxes */
+  .stat-mini-box {
+    background: #faf6f2;
+    border-radius: 0.75rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(92, 67, 56, 0.05);
+  }
 
-    .skin-dashboard .moisture {
-        background: #65bd79;
-        width: 80%;
-    }
+  /* Progress Circle items */
+  .progress-ring-card {
+    background: #ffffff;
+    border-radius: 1rem;
+    border: 1px solid var(--dash-border);
+    padding: 1.25rem 0.75rem;
+    text-align: center;
+  }
 
-    .skin-dashboard .sensitivity {
-        background: #e6b45f;
-        width: 45%;
-    }
+  .progress-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 4px solid #f3e6de;
+    border-top-color: #d9a99c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.5rem auto;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--dash-brown);
+  }
 
-    .skin-dashboard .main-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
-        gap: 20px;
-        align-items: stretch;
-    }
-
-    .skin-dashboard .panel-heading {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 20px;
-    }
-
-    .skin-dashboard .panel-heading h5 {
-        font-size: 17px;
-        font-weight: 700;
-        margin: 0;
-    }
-
-    .skin-dashboard .panel-heading p {
-        font-size: 12px;
-        color: #8a958d;
-        margin: 6px 0 0;
-    }
-
-    .skin-dashboard .chart-wrap {
-        position: relative;
-        height: 260px;
-        width: 100%;
-    }
-
-    .skin-dashboard .analysis-image {
-        background: linear-gradient(135deg, #e6f4d9, #c9e7ae);
-        border-radius: 15px;
-        height: 190px;
-        overflow: hidden;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-
-    .skin-dashboard .analysis-image img {
-        height: 100%;
-        width: 100%;
-        object-fit: cover;
-    }
-
-    .skin-dashboard .face-placeholder {
-        text-align: center;
-        color: #56734e;
-        padding: 20px;
-    }
-
-    .skin-dashboard .face-placeholder .face-icon {
-        font-size: 65px;
-        display: block;
-        margin-bottom: 8px;
-    }
-
-    .skin-dashboard .face-placeholder p {
-        font-size: 12px;
-        margin: 0;
-    }
-
-    .skin-dashboard .analysis-results {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 9px;
-        margin-bottom: 20px;
-    }
-
-    .skin-dashboard .result-box {
-        background: #f7faf6;
-        border-radius: 12px;
-        padding: 12px 8px;
-        text-align: center;
-    }
-
-    .skin-dashboard .result-box .result-icon {
-        font-size: 19px;
-        display: block;
-        margin-bottom: 7px;
-    }
-
-    .skin-dashboard .result-box strong {
-        font-size: 12px;
-        display: block;
-        margin-bottom: 5px;
-    }
-
-    .skin-dashboard .result-box span {
-        font-size: 11px;
-        color: #7b8b7e;
-    }
-
-    .skin-dashboard .dashboard-button {
-        display: block;
-        text-align: center;
-        text-decoration: none;
-        padding: 12px 16px;
-        border-radius: 12px;
-        font-size: 13px;
-        font-weight: 600;
-        background: #dff4d5;
-        color: #315d37;
-        border: 1px solid #cce8c1;
-        transition: 0.2s;
-    }
-
-    .skin-dashboard .dashboard-button:hover {
-        background: #ccebc0;
-        color: #244b2b;
-        text-decoration: none;
-    }
-
-    .skin-dashboard .quick-actions {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 15px;
-        margin-top: 22px;
-    }
-
-    .skin-dashboard .action-card {
-        display: block;
-        text-decoration: none;
-        color: #31483a;
-        padding: 19px;
-        background: #fff;
-        border: 1px solid #e8eee8;
-        border-radius: 16px;
-        transition: 0.2s;
-    }
-
-    .skin-dashboard .action-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(48, 76, 55, 0.08);
-        color: #315d37;
-        text-decoration: none;
-    }
-
-    .skin-dashboard .action-icon {
-        font-size: 23px;
-        margin-bottom: 12px;
-        display: block;
-    }
-
-    .skin-dashboard .action-card strong {
-        display: block;
-        font-size: 14px;
-        margin-bottom: 6px;
-    }
-
-    .skin-dashboard .action-card small {
-        color: #87928a;
-        font-size: 12px;
-        line-height: 1.5;
-    }
-
-    @media (max-width: 900px) {
-        .skin-dashboard .dashboard-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .skin-dashboard .main-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .skin-dashboard .dashboard-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .skin-dashboard .quick-actions {
-            grid-template-columns: 1fr;
-        }
-
-        .skin-dashboard h2 {
-            font-size: 23px;
-        }
-
-        .skin-dashboard .skin-card,
-        .skin-dashboard .panel {
-            padding: 16px;
-        }
-    }
+  /* Typography helpers */
+  .text-brown { color: var(--dash-brown) !important; }
+  .text-muted-brown { color: var(--dash-brown-light) !important; font-size: 0.85rem; }
 </style>
+{% endblock extra_css %}
 
-<div class="skin-dashboard">
-
-    <!-- Dashboard Header -->
-    <div class="welcome">
-        <div class="eyebrow">Overview</div>
-        <h2>Let's take care of your skin</h2>
-        <p class="subtitle">
-            Your personalized skin analysis and skincare routine dashboard.
-        </p>
+{% block content %}
+<div class="container-xl dash-container py-3">
+  
+  <!-- Greeting Header -->
+  <div class="mb-4">
+    <div class="d-flex align-items-center gap-2">
+      <h1 class="dash-title mb-0">{{ greeting }}, {{ request.user.first_name|default:request.user.username }}</h1>
+      <span style="font-size: 1.4rem;">☀️</span>
     </div>
+    <p class="dash-subtitle">Take care of your skin, it's the only one you have.</p>
+  </div>
 
-    <!-- Skin Metric Cards -->
-    <div class="dashboard-grid">
+  <div class="row g-4">
+    
+    <!-- LEFT MAIN COLUMN -->
+    <div class="col-lg-8">
+      
+      <!-- 1. Your Skin Type Card -->
+      <div class="dash-card skin-type-card mb-4">
+        <div class="dash-card-body">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+              <span class="text-muted-brown text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.08em;">Your Skin Type</span>
+              <h2 class="text-brown fw-bold mb-0" style="font-size: 1.4rem;">{{ skin_type_display }}</h2>
+            </div>
+            <a href="{% url 'my_profile' %}" class="text-brown fw-semibold text-decoration-none" style="font-size: 0.85rem;">View Details →</a>
+          </div>
 
-        <div class="skin-card">
-            <div class="metric-top">
-                <div class="metric-icon">✨</div>
-                <div class="metric-value" style="color:#8474d9;">75%</div>
+          <div class="row align-items-center g-3">
+            <div class="col-auto">
+              <div class="skin-avatar-box">
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#d9a99c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 3a3 3 0 1 1-3 3 3 3 0 0 1 3-3zm0 14.2a7.2 7.2 0 0 1-6-3.2c.03-2 4-3.1 6-3.1s5.97 1.1 6 3.1a7.2 7.2 0 0 1-6 3.2z"/></svg>
+              </div>
             </div>
-            <div class="metric-label">Skin Elasticity</div>
-            <div class="metric-description">
-                Track the appearance and firmness of your skin.
+            <div class="col">
+              <span class="text-muted-brown d-block mb-2" style="font-size: 0.8rem; font-weight: 600;">Main Concerns</span>
+              <div class="d-flex flex-wrap gap-2">
+                {% for concern in concerns %}
+                  <span class="skin-badge-tag">{{ concern }}</span>
+                {% empty %}
+                  <span class="skin-badge-tag">No concerns saved yet</span>
+                  <a href="{% url 'skin_analysis' %}" class="skin-badge-tag text-decoration-none">Take the analysis →</a>
+                {% endfor %}
+              </div>
             </div>
-            <div class="progress-track">
-                <div class="progress-fill elasticity"></div>
-            </div>
-            <div class="metric-description">Sample dashboard value</div>
+          </div>
         </div>
+      </div>
 
-        <div class="skin-card">
-            <div class="metric-top">
-                <div class="metric-icon">💧</div>
-                <div class="metric-value" style="color:#65bd79;">80%</div>
-            </div>
-            <div class="metric-label">Skin Moisture</div>
-            <div class="metric-description">
-                Review your skin hydration and moisture level.
-            </div>
-            <div class="progress-track">
-                <div class="progress-fill moisture"></div>
-            </div>
-            <div class="metric-description">Sample dashboard value</div>
-        </div>
-
-        <div class="skin-card">
-            <div class="metric-top">
-                <div class="metric-icon">🌿</div>
-                <div class="metric-value" style="color:#d6a54d;">45%</div>
-            </div>
-            <div class="metric-label">Skin Sensitivity</div>
-            <div class="metric-description">
-                Review sensitivity indicators from your skin assessment.
-            </div>
-            <div class="progress-track">
-                <div class="progress-fill sensitivity"></div>
-            </div>
-            <div class="metric-description">Sample dashboard value</div>
-        </div>
-
-    </div>
-
-    <!-- Chart and Face Analysis -->
-    <div class="main-grid">
-
-        <div class="panel">
-            <div class="panel-heading">
+      <!-- 2. Recent Assessment Card -->
+      <div class="dash-card mb-4">
+        <div class="dash-card-body py-3">
+          {% if latest_analysis %}
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <div class="d-flex align-items-center gap-3">
+                <div class="text-brown" style="font-size: 1.25rem;">🕒</div>
                 <div>
-                    <h5>Skin Test Analysis</h5>
-                    <p>Overview of sample skin assessment scores</p>
+                  <h4 class="text-brown fw-bold mb-1" style="font-size: 0.95rem;">Recent Assessment</h4>
+                  <p class="text-muted-brown mb-0" style="font-size: 0.8rem;">{{ latest_analysis.created_at|date:"M d, Y • g:i A" }}</p>
                 </div>
-                <span style="font-size:12px;color:#719276;">
-                    Demo data
-                </span>
-            </div>
-
-            <div class="chart-wrap">
-                <canvas id="skinAnalysisChart"></canvas>
-            </div>
-        </div>
-
-        <div class="panel">
-            <div class="panel-heading">
+              </div>
+              <div class="d-flex align-items-center gap-3 flex-wrap">
                 <div>
-                    <h5>Face Analysis</h5>
-                    <p>Your skin assessment overview</p>
+                  <span class="fw-bold text-brown" style="font-size: 0.9rem;">{{ latest_analysis.get_identified_skin_type_display }}</span>
+                  <span class="badge bg-light text-brown ms-2" style="font-size: 0.7rem;">Skin Type</span>
+                  <p class="text-muted-brown mb-0" style="font-size: 0.75rem;">Assessment #{{ latest_analysis.id }}</p>
                 </div>
+                <a href="{% url 'assessment_detail' latest_analysis.id %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1" style="border-color: rgba(92,67,56,0.2); color: var(--dash-brown); font-size: 0.8rem;">View Details ›</a>
+              </div>
             </div>
-
-            <div class="analysis-image">
-                <div class="face-placeholder">
-                    <span class="face-icon">👩🏻</span>
-                    <p>Complete your skin test to view your results</p>
+          {% else %}
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <div class="d-flex align-items-center gap-3">
+                <div class="text-brown" style="font-size: 1.25rem;">🕒</div>
+                <div>
+                  <h4 class="text-brown fw-bold mb-1" style="font-size: 0.95rem;">No assessment yet</h4>
+                  <p class="text-muted-brown mb-0" style="font-size: 0.8rem;">Complete your first skin analysis to personalise your routine.</p>
                 </div>
+              </div>
+              <a href="{% url 'skin_analysis' %}" class="btn btn-sm rounded-pill px-3 py-1" style="background: var(--dash-brown); color: #fff; font-size: 0.8rem;">Start Analysis ›</a>
             </div>
-
-            <div class="analysis-results">
-                <div class="result-box">
-                    <span class="result-icon">✨</span>
-                    <strong>Elasticity</strong>
-                    <span>Assessment</span>
-                </div>
-
-                <div class="result-box">
-                    <span class="result-icon">💧</span>
-                    <strong>Moisture</strong>
-                    <span>Assessment</span>
-                </div>
-
-                <div class="result-box">
-                    <span class="result-icon">🌿</span>
-                    <strong>Sensitivity</strong>
-                    <span>Assessment</span>
-                </div>
-            </div>
-
-            <a href="#" class="dashboard-button">
-                Start Skin Test →
-            </a>
+          {% endif %}
         </div>
+      </div>
+
+      <!-- 3. Three Quick Action Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <div class="action-card">
+            <div class="action-icon">🔍</div>
+            <h5 class="text-brown fw-bold mb-1" style="font-size: 0.95rem;">Start Skin Analysis</h5>
+            <p class="text-muted-brown mb-0" style="font-size: 0.78rem;">Answer a few questions to identify your skin type and concerns.</p>
+            <a href="{% url 'skin_analysis' %}" class="btn-warm-action">Begin Analysis →</a>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="action-card">
+            <div class="action-icon">📅</div>
+            <h5 class="text-brown fw-bold mb-1" style="font-size: 0.95rem;">View My Routine</h5>
+            <p class="text-muted-brown mb-0" style="font-size: 0.78rem;">Follow your personalized skincare routine and track your progress.</p>
+            <a href="{% url 'routine_planner' %}" class="btn-warm-action">Go to Routine →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Your Progress Section -->
+      <div class="dash-card">
+        <div class="dash-card-body">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <span style="font-size: 1.1rem;">📊</span>
+            <h4 class="text-brown fw-bold mb-0" style="font-size: 1rem;">Your Progress</h4>
+          </div>
+          <div class="row g-3">
+            <div class="col-6 col-md-3">
+              <div class="progress-ring-card">
+                <div class="progress-circle" style="border-top-color: #5c4338;">{{ total_assessments }}</div>
+                <h6 class="text-brown fw-bold mb-0" style="font-size: 0.85rem;">{{ total_assessments }}</h6>
+                <p class="text-muted-brown mb-0" style="font-size: 0.7rem;">Assessments Completed</p>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="progress-ring-card">
+                <div class="progress-circle">{{ morning_percent }}%</div>
+                <h6 class="text-brown fw-bold mb-0" style="font-size: 0.85rem;">{{ morning_completed }}/{{ morning_total }}</h6>
+                <p class="text-muted-brown mb-0" style="font-size: 0.7rem;">Morning Routine Today</p>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="progress-ring-card">
+                <div class="progress-circle">{{ evening_percent }}%</div>
+                <h6 class="text-brown fw-bold mb-0" style="font-size: 0.85rem;">{{ evening_completed }}/{{ evening_total }}</h6>
+                <p class="text-muted-brown mb-0" style="font-size: 0.7rem;">Evening Routine Today</p>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="progress-ring-card">
+                <div class="progress-circle">{{ routine_days_this_month }}</div>
+                <h6 class="text-brown fw-bold mb-0" style="font-size: 0.85rem;">{{ routine_days_this_month }}</h6>
+                <p class="text-muted-brown mb-0" style="font-size: 0.7rem;">Routine Days This Month</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
     </div>
 
-    <!-- Quick Actions -->
-    <div class="quick-actions">
+    <!-- RIGHT SIDEBAR COLUMN -->
+    <div class="col-lg-4">
+      
+      <!-- Quick Overview Card -->
+      <div class="dash-card mb-4">
+        <div class="dash-card-body">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <span style="font-size: 1rem;">📊</span>
+            <h4 class="text-brown fw-bold mb-0" style="font-size: 0.95rem;">Quick Overview</h4>
+          </div>
+          <div class="d-flex flex-column gap-2">
+            <div class="stat-mini-box d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center gap-2">
+                <span style="font-size: 0.9rem;">📅</span>
+                <span class="text-muted-brown" style="font-size: 0.8rem;">Assessments Completed</span>
+              </div>
+              <span class="text-brown fw-bold">{{ total_assessments }}</span>
+            </div>
+            <div class="stat-mini-box d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center gap-2">
+                <span style="font-size: 0.9rem;">🔥</span>
+                <span class="text-muted-brown" style="font-size: 0.8rem;">Current Routine Streak</span>
+              </div>
+              <span class="text-brown fw-bold">{{ routine_streak }} days</span>
+            </div>
+            <div class="stat-mini-box d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center gap-2">
+                <span style="font-size: 0.9rem;">📅</span>
+                <span class="text-muted-brown" style="font-size: 0.8rem;">Days in Routine This Month</span>
+              </div>
+              <span class="text-brown fw-bold">{{ routine_days_this_month }}</span>
+            </div>
+            <div class="stat-mini-box d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center gap-2">
+                <span style="font-size: 0.9rem;">🧴</span>
+                <span class="text-muted-brown" style="font-size: 0.8rem;">Products in Catalogue</span>
+              </div>
+              <span class="text-brown fw-bold">{{ recommended_products }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        <a href="{% url 'users:user_list' %}" class="action-card">
-            <span class="action-icon">🔬</span>
-            <strong>Skin Type Identification</strong>
-            <small>Start an assessment to identify your skin type.</small>
-        </a>
-
-        <a href="#" class="action-card">
-            <span class="action-icon">🧴</span>
-            <strong>Skincare Routine</strong>
-            <small>Explore skincare routine recommendations.</small>
-        </a>
-
-        <a href="#" class="action-card">
-            <span class="action-icon">📋</span>
-            <strong>Products</strong>
-            <small>Explore skincare products suited to your needs.</small>
-        </a>
+      <!-- Today's Skin Tip Card -->
+      <div class="dash-card mb-4" style="background: linear-gradient(135deg, #fffcf9 0%, #f9f0ea 100%);">
+        <div class="dash-card-body">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span style="font-size: 1.1rem;">💡</span>
+            <h4 class="text-brown fw-bold mb-0" style="font-size: 0.95rem;">Today's Skin Tip</h4>
+          </div>
+          <p class="text-brown mb-0" style="font-size: 0.83rem; line-height: 1.5; font-style: italic;">
+            "Consistency is more important than perfection. Small daily habits make a big difference in your skin's health."
+          </p>
+        </div>
+      </div>
 
     </div>
 
+  </div>
 </div>
-
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const canvas = document.getElementById("skinAnalysisChart");
-
-        if (!canvas || typeof Chart === "undefined") {
-            return;
-        }
-
-        new Chart(canvas, {
-            type: "line",
-            data: {
-                labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-                datasets: [
-                    {
-                        label: "Elasticity",
-                        data: [55, 62, 59, 70, 66, 75, 75],
-                        borderColor: "#8474d9",
-                        backgroundColor: "rgba(132,116,217,0.08)",
-                        tension: 0.4,
-                        borderWidth: 2,
-                        pointRadius: 3,
-                        fill: false
-                    },
-                    {
-                        label: "Moisture",
-                        data: [60, 58, 68, 65, 74, 78, 80],
-                        borderColor: "#65bd79",
-                        backgroundColor: "rgba(101,189,121,0.08)",
-                        tension: 0.4,
-                        borderWidth: 2,
-                        pointRadius: 3,
-                        fill: false
-                    },
-                    {
-                        label: "Sensitivity",
-                        data: [40, 45, 42, 50, 46, 43, 45],
-                        borderColor: "#e6b45f",
-                        backgroundColor: "rgba(230,180,95,0.08)",
-                        tension: 0.4,
-                        borderWidth: 2,
-                        pointRadius: 3,
-                        fill: false
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    intersect: false,
-                    mode: "index"
-                },
-                plugins: {
-                    legend: {
-                        position: "bottom",
-                        labels: {
-                            usePointStyle: true,
-                            boxWidth: 7,
-                            padding: 18
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: {
-                            callback: function(value) {
-                                return value + "%";
-                            }
-                        },
-                        grid: {
-                            color: "#edf1ed"
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
-            }
-        });
-    });
-</script>
-
-{% endblock %}
-
+{% endblock content %}

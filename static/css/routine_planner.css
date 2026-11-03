@@ -1,0 +1,490 @@
+
+  :root {
+    --cream: #f9f6f1;
+    --beige: #f4efe6;
+    --peach: #f7d9c4;
+    --peach-strong: #f2b99c;
+    --warm-brown: #7a5842;
+    --text-primary: #4a3f35;
+    --text-secondary: #7a6a5d;
+    --card-bg: #ffffff;
+    --border-soft: #e6dfd3;
+    --accent: #d98e5a;
+    --success: #7fa87c;
+  }
+
+  .routine-planner {
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    padding: 8px 4px 40px;
+  }
+
+  .rp-header {
+    margin-bottom: 24px;
+  }
+
+  .rp-header-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .rp-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(247, 217, 196, 0.8), rgba(249, 246, 241, 0.9));
+    color: var(--warm-brown);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.6px;
+    font-weight: 600;
+  }
+
+  .rp-header h1 {
+    font-size: clamp(26px, 4vw, 34px);
+    font-weight: 700;
+    margin: 10px 0 6px;
+    color: var(--text-primary);
+  }
+
+  .rp-subtitle {
+    color: var(--text-secondary);
+    font-size: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .rp-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--beige);
+    border: 1px solid var(--border-soft);
+    font-size: 12px;
+    color: var(--warm-brown);
+  }
+
+  .rp-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+    gap: 22px;
+    align-items: start;
+  }
+
+  .rp-main {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .rp-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    position: sticky;
+    top: 24px;
+  }
+
+  .rp-card {
+    background: var(--card-bg);
+    border-radius: 18px;
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 30px 60px -40px rgba(74, 63, 53, 0.9);
+    overflow: hidden;
+  }
+
+  .rp-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 22px 26px 0;
+  }
+
+  .rp-card-title-group h2,
+  .rp-card-title-group h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  .rp-card-title-group p {
+    margin: 6px 0 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+
+  .rp-card-body {
+    padding: 18px 26px 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .rp-tabs {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    background: var(--beige);
+    border: 1px solid var(--border-soft);
+    border-radius: 999px;
+    padding: 6px;
+  }
+
+  .rp-tab {
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .rp-tab.active {
+    background: linear-gradient(135deg, var(--peach-strong), var(--accent));
+    color: #fff;
+    box-shadow: 0 10px 30px rgba(217, 142, 90, 0.18);
+  }
+
+  .rp-tab:not(.active):hover {
+    background: rgba(247, 217, 196, 0.5);
+    color: var(--warm-brown);
+  }
+
+  .rp-tab-pane {
+    display: none;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .rp-tab-pane.active {
+    display: flex;
+  }
+
+  .rp-step-card {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 16px;
+    align-items: center;
+    border-radius: 16px;
+    border: 1px solid var(--border-soft);
+    background: linear-gradient(180deg, rgba(249, 246, 241, 0.8), #fff);
+    padding: 16px 18px;
+  }
+
+  .rp-step-number {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--peach), var(--peach-strong));
+    color: var(--warm-brown);
+    font-weight: 700;
+  }
+
+  .rp-step-main {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .rp-step-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .rp-step-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+  }
+
+  .rp-step-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(247, 217, 196, 0.6);
+    color: var(--warm-brown);
+  }
+
+  .rp-step-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+
+  .rp-step-desc {
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .rp-step-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .rp-checkbox {
+    width: 22px;
+    height: 22px;
+    border-radius: 8px;
+    border: 1px solid var(--border-soft);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: #fff;
+    transition: all 0.2s ease;
+  }
+
+  .rp-checkbox.checked {
+    background: linear-gradient(135deg, var(--peach-strong), var(--accent));
+    border-color: transparent;
+    color: #fff;
+  }
+
+  .rp-progress-card .rp-card-body {
+    gap: 18px;
+  }
+
+  .rp-progress-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .rp-progress-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .rp-progress-pill {
+    border-radius: 14px;
+    border: 1px solid var(--border-soft);
+    background: var(--beige);
+    padding: 12px 14px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .rp-progress-pill strong {
+    font-size: 20px;
+  }
+
+  .rp-progress-pill span {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .rp-progress-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .rp-progress-track {
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(230, 223, 211, 0.8);
+    overflow: hidden;
+  }
+
+  .rp-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--peach-strong), var(--accent));
+  }
+
+  .rp-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .rp-panel-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .rp-panel-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 14px;
+    border: 1px solid var(--border-soft);
+    padding: 12px 14px;
+    background: linear-gradient(180deg, rgba(249, 246, 241, 0.7), #fff);
+  }
+
+  .rp-panel-item-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .rp-panel-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--peach-strong);
+  }
+
+  .rp-tip-card {
+    border-radius: 18px;
+    border: 1px solid var(--border-soft);
+    background: radial-gradient(circle at top, rgba(247, 217, 196, 0.5), transparent 65%), #fff;
+    overflow: hidden;
+  }
+
+  .rp-tip-card .rp-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .rp-tip-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .rp-tip-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--peach), var(--peach-strong));
+    color: var(--warm-brown);
+  }
+
+  .rp-tip-text {
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .rp-weekly-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .rp-weekly-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 14px;
+    border: 1px solid var(--border-soft);
+    padding: 12px 16px;
+    background: #fff;
+  }
+
+  .rp-weekly-day {
+    font-weight: 600;
+  }
+
+  .rp-weekly-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .rp-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 999px;
+    padding: 10px 18px;
+    font-weight: 600;
+    font-size: 13px;
+    border: 1px solid transparent;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .rp-btn-primary {
+    background: linear-gradient(135deg, var(--peach-strong), var(--accent));
+    color: #fff;
+    box-shadow: 0 10px 30px rgba(217, 142, 90, 0.18);
+  }
+
+  .rp-btn-primary:hover {
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 12px 34px rgba(217, 142, 90, 0.24);
+  }
+
+  .rp-btn-ghost {
+    background: transparent;
+    color: var(--warm-brown);
+    border-color: rgba(122, 88, 66, 0.25);
+  }
+
+  .rp-btn-ghost:hover {
+    background: rgba(247, 217, 196, 0.4);
+    color: var(--warm-brown);
+  }
+
+  @media (max-width: 1080px) {
+    .rp-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .rp-sidebar {
+      position: static;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .rp-step-card {
+      grid-template-columns: auto 1fr;
+    }
+
+    .rp-step-actions {
+      grid-column: 1 / -1;
+      justify-content: flex-end;
+    }
+
+    .rp-progress-stats {
+      grid-template-columns: 1fr;
+    }
+  }

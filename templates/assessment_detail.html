@@ -1,0 +1,64 @@
+{% extends "theme/base.html" %}
+{% load static %}
+
+{% block title %}Assessment Details{% endblock title %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/assessment_history.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="ah-page">
+  <div class="ah-header">
+    <div>
+      <h1 class="ah-title">Assessment Details</h1>
+      <p class="ah-subtitle">View the full details of your skin assessment.</p>
+    </div>
+    <div class="ah-header-actions">
+      <a href="{% url 'assessment_history' %}" class="ah-btn">
+        <i class="fa-solid fa-arrow-left"></i> Back to History
+      </a>
+    </div>
+  </div>
+
+  <div class="ah-card" style="max-width: 800px;">
+    <div class="ah-card-header">
+      <div class="ah-card-title-group">
+        <div class="ah-card-icon"><i class="fa-regular fa-calendar"></i></div>
+        <div>
+          <h2>Assessment from {{ analysis.created_at|date:"F d, Y" }}</h2>
+          <p>{{ analysis.created_at|date:"g:i A" }} • {{ skin_type_display }} Skin</p>
+        </div>
+      </div>
+      <span class="ah-skin-badge">{{ skin_type_display }} Skin</span>
+    </div>
+    <div class="ah-card-body">
+      <div style="display: grid; gap: 16px;">
+        <div>
+          <h3 style="margin: 0 0 8px; color: var(--ah-text-primary);">Method</h3>
+          <p style="margin: 0; color: var(--ah-text-secondary);">{{ analysis.get_method_display }}</p>
+        </div>
+        {% if analysis.notes %}
+        <div>
+          <h3 style="margin: 0 0 8px; color: var(--ah-text-primary);">Notes</h3>
+          <p style="margin: 0; color: var(--ah-text-secondary); white-space: pre-wrap;">{{ analysis.notes }}</p>
+        </div>
+        {% endif %}
+        {% if answer_rows %}
+        <div>
+          <h3 style="margin: 0 0 8px; color: var(--ah-text-primary);">Assessment Responses</h3>
+          <div style="display: grid; gap: 8px;">
+            {% for row in answer_rows %}
+            <div style="padding: 10px 14px; background: var(--ah-cream); border: 1px solid var(--ah-border); border-radius: 10px; display: flex; justify-content: space-between; gap: 16px;">
+              <span style="color: var(--ah-text-primary);">{{ row.question }}</span>
+              <span style="color: var(--ah-text-secondary); text-align: right;">{{ row.answer }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,245 @@
+{% extends "theme/base.html" %}
+{% load static %}
+
+{% block title %}Assessment History{% endblock title %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/assessment_history.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="ah-page">
+  <!-- Top Navigation Style Header -->
+  <div class="ah-header">
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <h1 class="ah-title">Assessment History</h1>
+      <p class="ah-subtitle">View your past skin assessments and track how your skin changes over time.</p>
+    </div>
+    <div class="ah-header-actions">
+      <a href="{% url 'assessment_compare' %}" class="ah-btn ah-btn-primary">
+        <i class="fa-solid fa-sliders"></i> Compare Assessments
+      </a>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="ah-summary-grid">
+    <div class="ah-summary-card">
+      <div class="ah-summary-icon">
+        <i class="fa-regular fa-calendar-check"></i>
+      </div>
+      <div class="ah-summary-content">
+        <span class="ah-summary-label">Total Assessments</span>
+        <span class="ah-summary-value">{{ total_assessments }}</span>
+        <span class="ah-summary-subtext">Since you joined.</span>
+      </div>
+    </div>
+
+    <div class="ah-summary-card">
+      <div class="ah-summary-icon">
+        <i class="fa-regular fa-calendar"></i>
+      </div>
+      <div class="ah-summary-content">
+        <span class="ah-summary-label">Latest Assessment</span>
+        <span class="ah-summary-value" style="font-size: 20px;">{% if latest_analysis %}{{ latest_analysis.created_at|date:"M d, Y" }}{% else %}-{% endif %}</span>
+        <span class="ah-summary-subtext">{% if latest_skin_type_display %}{{ latest_skin_type_display }} Skin{% else %}No assessments yet{% endif %}</span>
+      </div>
+    </div>
+
+    <div class="ah-summary-card">
+      <div class="ah-summary-icon">
+        <i class="fa-solid fa-leaf"></i>
+      </div>
+      <div class="ah-summary-content">
+        <span class="ah-summary-label">Most Common Skin Type</span>
+        <span class="ah-summary-value" style="font-size: 20px;">{% if most_common_skin_type_display %}{{ most_common_skin_type_display }}{% else %}-{% endif %}</span>
+        <span class="ah-summary-subtext">{% if most_common_count and total_assessments %}{{ most_common_count }} out of {{ total_assessments }} assessments.{% else %}No data available{% endif %}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart and Journey -->
+  <div class="ah-main-grid">
+    <div class="ah-card">
+      <div class="ah-card-header">
+        <div class="ah-card-title-group">
+          <div class="ah-card-icon"><i class="fa-solid fa-chart-line"></i></div>
+          <div>
+            <h2>Skin Type Trend</h2>
+            <p>See how your skin type has changed over time.</p>
+          </div>
+        </div>
+      </div>
+      <div class="ah-card-body">
+        {% if chart_data|length > 0 %}
+        <div class="ah-chart-container">
+          <canvas id="skinTrendChart"></canvas>
+        </div>
+        {% else %}
+        <div class="ah-empty-state">
+          <i class="fa-solid fa-chart-line"></i>
+          <h3>No trend data yet</h3>
+          <p>Complete your first skin analysis to see your skin type trend over time.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="ah-card">
+      <div class="ah-card-header">
+        <div class="ah-card-title-group">
+          <div class="ah-card-icon"><i class="fa-solid fa-route"></i></div>
+          <div>
+            <h2>Your Skin Type Journey</h2>
+            <p>Insights from your assessment history</p>
+          </div>
+        </div>
+      </div>
+      <div class="ah-card-body">
+        <p style="color: var(--ah-text-primary); line-height: 1.7; margin: 0;">
+          {{ journey_explanation }}
+        </p>
+        <div class="ah-journey-tip">
+          <div class="ah-tip-header">
+            <i class="fa-solid fa-lightbulb"></i>
+            <span>Good to Know</span>
+          </div>
+          <p class="ah-tip-text">
+            Skin conditions can change over time due to factors such as skincare habits, environment, stress, hormones, and other influences. This assessment is for informational purposes only and is not a medical diagnosis.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assessment History List -->
+  <div class="ah-section-header">
+    <div class="ah-section-title-group">
+      <h2>Your Assessment History</h2>
+      <p>View the details of each assessment and your personalized results.</p>
+    </div>
+  </div>
+
+  {% if assessments %}
+  <div class="ah-history-list">
+    {% for assessment in assessments %}
+    <div class="ah-history-row">
+      <div class="ah-history-main">
+        <div class="ah-history-icon">
+          <i class="fa-regular fa-calendar"></i>
+        </div>
+        <div class="ah-history-info">
+          <span class="ah-history-date">{{ assessment.created_at|date:"F d, Y" }}</span>
+          <div class="ah-history-meta">
+            <span>{{ assessment.created_at|date:"g:i A" }}</span>
+            <span>•</span>
+            <span class="ah-skin-badge">{{ assessment.get_identified_skin_type_display }} Skin</span>
+          </div>
+        </div>
+      </div>
+      <div class="ah-history-concerns">
+        {% if assessment.notes %}
+          {{ assessment.notes|truncatewords:15 }}
+        {% elif assessment.answers %}
+          Based on your questionnaire responses
+        {% else %}
+          Assessment completed
+        {% endif %}
+      </div>
+      <a href="{% url 'assessment_detail' assessment.pk %}" class="ah-btn">
+        <i class="fa-solid fa-eye"></i> View Details
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="ah-card">
+    <div class="ah-empty-state">
+      <i class="fa-solid fa-clipboard-list"></i>
+      <h3>No assessments yet</h3>
+      <p style="margin-bottom: 16px;">Start your first skin analysis to build your assessment history.</p>
+      <a href="{% url 'skin_analysis' %}" class="ah-btn ah-btn-primary">
+        <i class="fa-solid fa-magnifying-glass"></i> Start Skin Analysis
+      </a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% if chart_data|length > 0 %}
+<script>
+  const ctx = document.getElementById('skinTrendChart').getContext('2d');
+  const chartData = {{ chart_data|safe }};
+  
+  const skinTypeOrder = { 'dry': 0, 'sensitive': 1, 'normal': 2, 'combination': 3, 'oily': 4 };
+  const skinTypeLabels = { 'dry': 'Dry', 'sensitive': 'Sensitive', 'normal': 'Normal', 'combination': 'Combination', 'oily': 'Oily' };
+  
+  const labels = chartData.map(d => {
+    const date = new Date(d.date);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  });
+  
+  const dataPoints = chartData.map(d => skinTypeOrder[d.skin_type] !== undefined ? skinTypeOrder[d.skin_type] : 2);
+  
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Skin Type',
+        data: dataPoints,
+        borderColor: '#7a5842',
+        backgroundColor: '#7a5842',
+        tension: 0.3,
+        pointRadius: 5,
+        pointBackgroundColor: '#7a5842',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const idx = context.dataIndex;
+              return 'Skin Type: ' + (chartData[idx] ? chartData[idx].skin_type_display : '');
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          ticks: {
+            stepSize: 1,
+            callback: function(value) {
+              const map = ['Dry', 'Sensitive', 'Normal', 'Combination', 'Oily'];
+              return map[value] || '';
+            },
+            color: '#7a6a5d'
+          },
+          grid: {
+            color: '#e6dfd3'
+          }
+        },
+        x: {
+          ticks: {
+            color: '#7a6a5d'
+          },
+          grid: {
+            color: '#e6dfd3'
+          }
+        }
+      }
+    }
+  });
+</script>
+{% endif %}
+{% endblock content %}

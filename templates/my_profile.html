@@ -1,0 +1,660 @@
+{% extends "theme/base.html" %}
+{% load static %}
+
+{% block title %}My Profile{% endblock title %}
+
+{% block extra_css %}
+<style>
+  body,
+  .page,
+  .page-wrapper,
+  .page-body,
+  .container-xl {
+    background-color: #f7f2ee !important;
+  }
+
+  .profile-page {
+    --profile-brown: #5c4338;
+    --profile-brown-light: rgba(92, 67, 56, 0.7);
+    --profile-accent: #d9a99c;
+    --profile-accent-strong: #cd9c8b;
+    color: var(--profile-brown);
+  }
+
+  .profile-page .page-title {
+    color: var(--profile-brown);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .profile-page .text-muted {
+    color: var(--profile-brown-light) !important;
+  }
+
+  .profile-card {
+    border-radius: 1rem;
+    border: 1px solid rgba(92, 67, 56, 0.08);
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(92, 67, 56, 0.02), 0 12px 30px -16px rgba(92, 67, 56, 0.4);
+    overflow: hidden;
+  }
+
+  .profile-card .card-header {
+    background: transparent;
+    border-bottom: 1px solid rgba(92, 67, 56, 0.08);
+    padding: 1.25rem 1.5rem;
+  }
+
+  .profile-card .card-body {
+    padding: 1.5rem;
+  }
+
+  .profile-avatar {
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--profile-accent) 0%, var(--profile-accent-strong) 100%);
+    box-shadow: 0 10px 24px -14px rgba(205, 156, 139, 0.9);
+  }
+
+  .profile-header-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--profile-brown);
+    margin-bottom: 0.25rem;
+  }
+
+  .profile-header-meta {
+    color: var(--profile-brown-light);
+  }
+
+  .btn-warm-primary {
+    background: linear-gradient(135deg, var(--profile-accent) 0%, var(--profile-accent-strong) 100%);
+    border: none;
+    color: #ffffff;
+    font-weight: 600;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 24px -14px rgba(205, 156, 139, 0.9);
+    padding: 0.55rem 1.25rem;
+  }
+
+  .btn-warm-primary:hover,
+  .btn-warm-primary:focus {
+    background: linear-gradient(135deg, #e4b5a8 0%, #d49d90 100%);
+    color: #ffffff;
+  }
+
+  .btn-warm-ghost {
+    border-radius: 0.75rem;
+    border: 1px solid rgba(92, 67, 56, 0.18);
+    color: var(--profile-brown);
+    background: transparent;
+    font-weight: 600;
+    padding: 0.55rem 1.25rem;
+  }
+
+  .btn-warm-ghost:hover,
+  .btn-warm-ghost:focus {
+    background: rgba(205, 156, 139, 0.12);
+    color: var(--profile-brown);
+    border-color: rgba(205, 156, 139, 0.6);
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: var(--profile-brown);
+    margin-bottom: 0.4rem;
+  }
+
+  .form-control,
+  .form-select {
+    border-radius: 0.75rem;
+    border: 1px solid rgba(92, 67, 56, 0.16);
+    padding: 0.6rem 0.9rem;
+    color: var(--profile-brown);
+    background-color: #ffffff;
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: rgba(205, 156, 139, 0.9);
+    box-shadow: 0 0 0 0.2rem rgba(217, 169, 156, 0.18);
+  }
+
+  .form-control::placeholder {
+    color: rgba(92, 67, 56, 0.4);
+  }
+
+  .section-title {
+    font-weight: 700;
+    color: var(--profile-brown);
+    margin-bottom: 0.25rem;
+  }
+
+  .section-subtitle {
+    color: var(--profile-brown-light);
+    margin-bottom: 0;
+  }
+
+  .skin-summary-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(217, 169, 156, 0.18);
+    color: var(--profile-accent-strong);
+    font-size: 1.25rem;
+  }
+
+  .preference-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 0;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.2s ease;
+  }
+
+  button.preference-row {
+    width: 100%;
+    background: none;
+    border: none;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .preference-row + .preference-row {
+    border-top: 1px solid rgba(92, 67, 56, 0.08);
+  }
+
+  .preference-block + .preference-block {
+    border-top: 1px solid rgba(92, 67, 56, 0.08);
+  }
+
+  .preference-chevron {
+    transition: transform 0.2s ease;
+  }
+
+  .preference-toggle[aria-expanded="true"] .preference-chevron {
+    transform: rotate(90deg);
+  }
+
+  .preference-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.85rem 0.75rem 1rem;
+  }
+
+  .preference-panel[hidden] {
+    display: none;
+  }
+
+  .preference-setting {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 0.75rem;
+    background: rgba(217, 169, 156, 0.1);
+    cursor: pointer;
+  }
+
+  .preference-setting .form-check-input {
+    cursor: pointer;
+    border-color: rgba(92, 67, 56, 0.3);
+  }
+
+  .preference-setting .form-check-input:checked {
+    background-color: var(--profile-accent-strong);
+    border-color: var(--profile-accent-strong);
+  }
+
+  .preference-visibility {
+    border-radius: 0.65rem;
+    border: 1px solid rgba(92, 67, 56, 0.16);
+    font-size: 0.85rem;
+  }
+
+  .preference-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.65rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(217, 169, 156, 0.15);
+    color: var(--profile-brown);
+    font-size: 0.95rem;
+    flex-shrink: 0;
+  }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="container-xl profile-page">
+  <div class="page-header d-print-none mb-3">
+    <div class="row align-items-center">
+      <div class="col">
+        <h2 class="page-title">My Profile</h2>
+        <div class="text-muted mt-1">Manage your account information and preferences</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12">
+      <div class="card profile-card">
+        <div class="card-body d-flex flex-column flex-lg-row align-items-start align-items-lg-center gap-3">
+          <div class="profile-avatar" style="overflow: hidden;">
+            {% if user_profile.avatar %}
+              <img src="{{ user_profile.avatar.url }}" alt="{{ user.username }}" style="width: 100%; height: 100%; object-fit: cover;">
+            {% elif user.first_name or user.last_name %}
+              {{ user.first_name|default:user.username|slice:":1" }}{{ user.last_name|slice:":1" }}
+            {% else %}
+              {{ user.username|slice:":2"|upper }}
+            {% endif %}
+          </div>
+          <div class="flex-grow-1">
+            <div class="profile-header-name">
+              {% if user.first_name or user.last_name %}
+                {{ user.first_name }} {{ user.last_name }}
+              {% else %}
+                {{ user.username }}
+              {% endif %}
+            </div>
+            <div class="profile-header-meta d-flex flex-column flex-md-row gap-2 gap-md-3">
+              <span><i class="fa-solid fa-shield-halved me-1"></i>{% if user.is_superuser %}Administrator{% elif user.is_staff %}Staff{% else %}Member{% endif %}</span>
+              <span><i class="fa-solid fa-envelope me-1"></i>{{ user.email|default:"Not provided" }}</span>
+              <span><i class="fa-solid fa-user me-1"></i>{{ user.username }}</span>
+              <span><i class="fa-solid fa-calendar me-1"></i>Joined {{ user.date_joined|date:"M Y" }}</span>
+            </div>
+          </div>
+          <div class="d-flex flex-column flex-sm-row gap-2">
+            <a class="btn btn-warm-primary" href="#account-information">
+              <i class="fa-solid fa-pen-to-square me-1"></i>Edit Profile
+            </a>
+            <form method="post" enctype="multipart/form-data" id="avatar-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_avatar">
+              <input type="file" name="avatar" id="avatar-input" accept="image/*" class="d-none">
+              <button class="btn btn-warm-ghost" type="button" id="avatar-button">
+                <i class="fa-solid fa-camera me-1"></i>Update Avatar
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="card profile-card mb-3" id="account-information">
+        <div class="card-header">
+          <div>
+            <h3 class="section-title mb-1">Account Information</h3>
+            <p class="section-subtitle">Update your personal details and login credentials</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_account">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label" for="account-first-name">First Name</label>
+                <input type="text" class="form-control" id="account-first-name" name="first_name" placeholder="Enter first name" value="{{ user.first_name }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="account-last-name">Last Name</label>
+                <input type="text" class="form-control" id="account-last-name" name="last_name" placeholder="Enter last name" value="{{ user.last_name }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="account-email">Email Address</label>
+                <input type="email" class="form-control" id="account-email" name="email" placeholder="Enter email address" value="{{ user.email }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="account-username">Username</label>
+                <input type="text" class="form-control" id="account-username" name="username" placeholder="Enter username" value="{{ user.username }}" required>
+              </div>
+            </div>
+            <div class="d-flex justify-content-end mt-4">
+              <button type="submit" class="btn btn-warm-primary">
+                <i class="fa-solid fa-floppy-disk me-1"></i>Save Account
+              </button>
+            </div>
+          </form>
+
+          <hr class="my-4" style="border-color: rgba(92, 67, 56, 0.08);">
+
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="change_password">
+            <div class="mb-3">
+              <h4 class="section-title mb-1">Change Password</h4>
+              <p class="section-subtitle">Use a strong password you have not used elsewhere</p>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label" for="current-password">Current Password</label>
+                <input type="password" class="form-control" id="current-password" name="current_password" placeholder="Enter current password" autocomplete="current-password">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="new-password">New Password</label>
+                <input type="password" class="form-control" id="new-password" name="new_password" placeholder="Enter new password" autocomplete="new-password">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="confirm-password">Confirm New Password</label>
+                <input type="password" class="form-control" id="confirm-password" name="confirm_password" placeholder="Confirm new password" autocomplete="new-password">
+              </div>
+            </div>
+            <div class="d-flex justify-content-end mt-4">
+              <button type="submit" class="btn btn-warm-ghost">
+                <i class="fa-solid fa-key me-1"></i>Update Password
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card profile-card">
+        <div class="card-header">
+          <div>
+            <h3 class="section-title mb-1">Skin Profile Details</h3>
+            <p class="section-subtitle">Fine-tune the information used for your recommendations</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_skin">
+            <div class="row g-3">
+              <div class="col-md-5">
+                <label class="form-label" for="skin-type-select">Skin Type</label>
+                <select class="form-select" id="skin-type-select" name="skin_type">
+                  {% for value, label in skin_type_choices %}
+                    <option value="{{ value }}" {% if profile.skin_type == value %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-7">
+                <label class="form-label" for="skin-concerns">Main Concerns</label>
+                <input type="text" class="form-control" id="skin-concerns" name="concerns" value="{{ profile.concerns }}" placeholder="e.g. Acne, Enlarged Pores, Dryness">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="skin-sensitivities">Sensitivities</label>
+                <input type="text" class="form-control" id="skin-sensitivities" name="sensitivities" value="{{ profile.sensitivities }}" placeholder="e.g. Fragrance, Alcohol">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="skin-goals">Skincare Goals</label>
+                <input type="text" class="form-control" id="skin-goals" name="skincare_goals" value="{{ profile.skincare_goals }}" placeholder="e.g. Clearer skin, hydration">
+              </div>
+            </div>
+            <div class="d-flex justify-content-end mt-4">
+              <button type="submit" class="btn btn-warm-primary">
+                <i class="fa-solid fa-floppy-disk me-1"></i>Save Skin Profile
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card profile-card mb-3">
+        <div class="card-header">
+          <div>
+            <h3 class="section-title mb-1">Skin Profile Summary</h3>
+            <p class="section-subtitle">Your current skin assessment</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="skin-summary-icon">
+              <i class="fa-solid fa-droplet"></i>
+            </div>
+            <div>
+              <div class="text-uppercase small fw-semibold" style="letter-spacing: 0.08em; color: var(--profile-brown-light);">Current Skin Type</div>
+              <div class="h3 mb-0" style="color: var(--profile-brown);">
+                {% if profile.skin_type != 'unknown' %}{{ profile.get_skin_type_display }}{% else %}Not Yet Identified{% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <div class="fw-semibold mb-1" style="color: var(--profile-brown);">Main Concerns</div>
+            <p class="mb-0" style="color: var(--profile-brown-light);">
+              {% if profile.concerns %}{{ profile.concerns }}{% else %}No concerns saved yet. Take the skin analysis to personalise this.{% endif %}
+            </p>
+          </div>
+          <div class="mb-3">
+            <div class="fw-semibold mb-1" style="color: var(--profile-brown);">Skincare Goals</div>
+            <p class="mb-0" style="color: var(--profile-brown-light);">
+              {% if profile.skincare_goals %}{{ profile.skincare_goals }}{% else %}No goals saved yet.{% endif %}
+            </p>
+          </div>
+          <a href="{% url 'skin_analysis' %}" class="btn btn-warm-ghost w-100">
+            <i class="fa-solid fa-rotate me-1"></i>Retake Skin Questionnaire
+          </a>
+        </div>
+      </div>
+
+      <div class="card profile-card">
+        <div class="card-header">
+          <div>
+            <h3 class="section-title mb-1">Preferences</h3>
+            <p class="section-subtitle">Control your settings and activity</p>
+          </div>
+        </div>
+        <div class="card-body py-2" id="preferences-accordion">
+          <div class="preference-block">
+            <button type="button" class="preference-row preference-toggle" data-preference-toggle="notifications" aria-expanded="false" aria-controls="preference-panel-notifications">
+              <div class="d-flex align-items-center gap-3">
+                <div class="preference-icon">
+                  <i class="fa-solid fa-bell"></i>
+                </div>
+                <div>
+                  <div class="fw-semibold" style="color: var(--profile-brown);">Notifications</div>
+                  <div class="small" style="color: var(--profile-brown-light);">Manage your notification settings</div>
+                </div>
+              </div>
+              <i class="fa-solid fa-chevron-right text-muted small preference-chevron"></i>
+            </button>
+            <div class="preference-panel" id="preference-panel-notifications" hidden>
+              <label class="preference-setting">
+                <div>
+                  <div class="fw-semibold" style="color: var(--profile-brown);">Email notifications</div>
+                  <div class="small" style="color: var(--profile-brown-light);">Receive updates about your routines by email</div>
+                </div>
+                <div class="form-check form-switch m-0">
+                  <input type="checkbox" class="form-check-input preference-field" data-preference-field="email_notifications" {% if preferences.email_notifications %}checked{% endif %}>
+                </div>
+              </label>
+              <label class="preference-setting">
+                <div>
+                  <div class="fw-semibold" style="color: var(--profile-brown);">Push notifications</div>
+                  <div class="small" style="color: var(--profile-brown-light);">Get reminders about today's routine steps</div>
+                </div>
+                <div class="form-check form-switch m-0">
+                  <input type="checkbox" class="form-check-input preference-field" data-preference-field="push_notifications" {% if preferences.push_notifications %}checked{% endif %}>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="preference-block">
+            <button type="button" class="preference-row preference-toggle" data-preference-toggle="appearance" aria-expanded="false" aria-controls="preference-panel-appearance">
+              <div class="d-flex align-items-center gap-3">
+                <div class="preference-icon">
+                  <i class="fa-solid fa-sun"></i>
+                </div>
+                <div>
+                  <div class="fw-semibold" style="color: var(--profile-brown);">Appearance</div>
+                  <div class="small" id="appearance-subtitle" style="color: var(--profile-brown-light);">{% if preferences.theme == 'dark' %}Dark mode{% else %}Light mode{% endif %}</div>
+                </div>
+              </div>
+              <i class="fa-solid fa-chevron-right text-muted small preference-chevron"></i>
+            </button>
+            <div class="preference-panel" id="preference-panel-appearance" hidden>
+              <label class="preference-setting">
+                <div>
+                  <div class="fw-semibold" style="color: var(--profile-brown);">Light mode</div>
+                  <div class="small" style="color: var(--profile-brown-light);">Warm, bright interface</div>
+                </div>
+                <div class="form-check m-0">
+                  <input type="radio" class="form-check-input preference-field" name="preferences-theme" value="light" data-preference-field="theme" {% if preferences.theme != 'dark' %}checked{% endif %}>
+                </div>
+              </label>
+              <label class="preference-setting">
+                <div>
+                  <div class="fw-semibold" style="color: var(--profile-brown);">Dark mode</div>
+                  <div class="small" style="color: var(--profile-brown-light);">Easier on the eyes at night</div>
+                </div>
+                <div class="form-check m-0">
+                  <input type="radio" class="form-check-input preference-field" name="preferences-theme" value="dark" data-preference-field="theme" {% if preferences.theme == 'dark' %}checked{% endif %}>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="preference-block">
+            <button type="button" class="preference-row preference-toggle" data-preference-toggle="privacy" aria-expanded="false" aria-controls="preference-panel-privacy">
+              <div class="d-flex align-items-center gap-3">
+                <div class="preference-icon">
+                  <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div>
+                  <div class="fw-semibold" style="color: var(--profile-brown);">Privacy</div>
+                  <div class="small" style="color: var(--profile-brown-light);">Control your data and activity</div>
+                </div>
+              </div>
+              <i class="fa-solid fa-chevron-right text-muted small preference-chevron"></i>
+            </button>
+            <div class="preference-panel" id="preference-panel-privacy" hidden>
+              <div class="preference-setting">
+                <div>
+                  <div class="fw-semibold" style="color: var(--profile-brown);">Profile visibility</div>
+                  <div class="small" style="color: var(--profile-brown-light);">Choose who can see your profile</div>
+                </div>
+                <select class="form-select preference-visibility" data-preference-field="profile_visibility" style="max-width: 9.5rem;">
+                  <option value="private" {% if preferences.profile_visibility == 'private' %}selected{% endif %}>Private</option>
+                  <option value="public" {% if preferences.profile_visibility == 'public' %}selected{% endif %}>Public</option>
+                </select>
+              </div>
+              <label class="preference-setting">
+                <div>
+                  <div class="fw-semibold" style="color: var(--profile-brown);">Data sharing</div>
+                  <div class="small" style="color: var(--profile-brown-light);">Help improve recommendations by sharing anonymous activity</div>
+                </div>
+                <div class="form-check form-switch m-0">
+                  <input type="checkbox" class="form-check-input preference-field" data-preference-field="data_sharing" {% if preferences.data_sharing %}checked{% endif %}>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var avatarButton = document.getElementById('avatar-button');
+    var avatarInput = document.getElementById('avatar-input');
+    var avatarForm = document.getElementById('avatar-form');
+
+    if (avatarButton && avatarInput && avatarForm) {
+      avatarButton.addEventListener('click', function () { avatarInput.click(); });
+      avatarInput.addEventListener('change', function () {
+        if (avatarInput.files.length) { avatarForm.submit(); }
+      });
+    }
+
+    var accordion = document.getElementById('preferences-accordion');
+
+    if (accordion) {
+      var toggles = Array.prototype.slice.call(accordion.querySelectorAll('.preference-toggle'));
+      var updateUrl = '{% url "update_preferences" %}';
+
+      function getCsrfToken() {
+        var name = 'csrftoken';
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+          var cookie = cookies[i].trim();
+          if (cookie.indexOf(name + '=') === 0) {
+            return decodeURIComponent(cookie.substring(name.length + 1));
+          }
+        }
+        return '';
+      }
+
+      function savePreference(field, value) {
+        return fetch(updateUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify({ field: field, value: value })
+        });
+      }
+
+      toggles.forEach(function (toggle) {
+        var panel = document.getElementById(toggle.getAttribute('aria-controls'));
+        if (!panel) { return; }
+
+        toggle.addEventListener('click', function () {
+          var isOpen = toggle.getAttribute('aria-expanded') === 'true';
+          toggles.forEach(function (other) {
+            if (other !== toggle) {
+              other.setAttribute('aria-expanded', 'false');
+              var otherPanel = document.getElementById(other.getAttribute('aria-controls'));
+              if (otherPanel) { otherPanel.hidden = true; }
+            }
+          });
+          toggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+          panel.hidden = isOpen;
+        });
+      });
+
+      accordion.querySelectorAll('.preference-field[type="checkbox"]').forEach(function (input) {
+        input.addEventListener('change', function () {
+          savePreference(input.dataset.preferenceField, input.checked);
+        });
+      });
+
+      accordion.querySelectorAll('.preference-field[name="preferences-theme"]').forEach(function (radio) {
+        radio.addEventListener('change', function () {
+          savePreference('theme', radio.value);
+          document.documentElement.setAttribute('data-bs-theme', radio.value);
+          window.localStorage.setItem('tabler-theme', radio.value);
+          var subtitle = document.getElementById('appearance-subtitle');
+          if (subtitle) {
+            subtitle.textContent = radio.value === 'dark' ? 'Dark mode' : 'Light mode';
+          }
+        });
+      });
+
+      var visibility = accordion.querySelector('.preference-visibility');
+      if (visibility) {
+        visibility.addEventListener('change', function () {
+          savePreference('profile_visibility', visibility.value);
+        });
+      }
+    }
+  });
+</script>
+{% endblock content %}

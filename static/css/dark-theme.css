@@ -1,0 +1,443 @@
+/* Warm dark palette overrides — active when data-bs-theme="dark" is set on <html>,
+   e.g. via My Profile > Preferences > Appearance. Higher specificity than the
+   page-level styles in templates so dark mode wins on every page. */
+
+html[data-bs-theme="dark"] {
+  --tblr-body-bg: #141110;
+  --tblr-body-bg-rgb: 20, 17, 16;
+  --tblr-body-color: #ecdcd0;
+  --tblr-border-color: rgba(236, 220, 208, 0.1);
+  --tblr-border-color-translucent: rgba(236, 220, 208, 0.07);
+  --tblr-bg-surface: #1e1918;
+  --tblr-bg-surface-secondary: #241e1c;
+  --tblr-bg-surface-tertiary: #292220;
+  --tblr-muted: rgba(236, 220, 208, 0.62);
+  --tblr-table-color: #ecdcd0;
+}
+
+/* Forced light backgrounds from page templates */
+html[data-bs-theme="dark"] body,
+html[data-bs-theme="dark"] .page,
+html[data-bs-theme="dark"] .page-wrapper,
+html[data-bs-theme="dark"] .page-body,
+html[data-bs-theme="dark"] #page-body,
+html[data-bs-theme="dark"] .container-xl {
+  background-color: #141110 !important;
+  color: #ecdcd0 !important;
+}
+
+/* Shared palettes of the questionnaire, recommendations and routine planner pages */
+html[data-bs-theme="dark"] {
+  --cream-bg: #141110;
+  --cream: #141110;
+  --beige: #241e1c;
+  --peach: #382a22;
+  --peach-accent: #e8b894;
+  --peach-strong: #f2b99c;
+  --warm-brown: #ecdcd0;
+  --text-dark: #ecdcd0;
+  --text-light: rgba(236, 220, 208, 0.62);
+  --text-primary: #ecdcd0;
+  --text-secondary: rgba(236, 220, 208, 0.62);
+  --card-bg: #1e1918;
+  --border-soft: rgba(236, 220, 208, 0.12);
+  --accent: #d98e5a;
+  --success: #8fae8c;
+  --ah-cream: #141110;
+  --ah-beige: #241e1c;
+  --ah-peach: #382a22;
+  --ah-peach-strong: #f2b99c;
+  --ah-warm-brown: #ecdcd0;
+  --ah-text-primary: #ecdcd0;
+  --ah-text-secondary: rgba(236, 220, 208, 0.62);
+  --ah-card-bg: #1e1918;
+  --ah-border: rgba(236, 220, 208, 0.12);
+  --ah-accent: #d98e5a;
+}
+
+html[data-bs-theme="dark"] .ah-page {
+  background: #141110;
+}
+
+/* Assessment history extras rendered with rgba-based gradients */
+html[data-bs-theme="dark"] .ah-journey-tip {
+  background: linear-gradient(90deg, rgba(232, 184, 148, 0.12), rgba(30, 25, 24, 0.9));
+}
+
+/* My Profile */
+html[data-bs-theme="dark"] .profile-page {
+  --profile-brown: #ecdcd0;
+  --profile-brown-light: rgba(236, 220, 208, 0.62);
+  --profile-accent: #d9a99c;
+  --profile-accent-strong: #cd9c8b;
+  color: var(--profile-brown);
+}
+
+html[data-bs-theme="dark"] .profile-card {
+  background: #1e1918;
+  border-color: rgba(236, 220, 208, 0.1);
+  box-shadow: 0 12px 30px -16px rgba(0, 0, 0, 0.6);
+}
+
+/* Dashboard */
+html[data-bs-theme="dark"] .dash-container {
+  --dash-brown: #ecdcd0;
+  --dash-brown-light: rgba(236, 220, 208, 0.62);
+  --dash-border: rgba(236, 220, 208, 0.1);
+  --dash-card-bg: #1e1918;
+  color: var(--dash-brown);
+}
+
+html[data-bs-theme="dark"] .dash-container .skin-type-card,
+html[data-bs-theme="dark"] .dash-container .action-card {
+  background: linear-gradient(135deg, #231d1c 0%, #1e1918 100%);
+}
+
+html[data-bs-theme="dark"] .dash-container .skin-avatar-box,
+html[data-bs-theme="dark"] .dash-container .skin-badge-tag,
+html[data-bs-theme="dark"] .dash-container .action-icon,
+html[data-bs-theme="dark"] .dash-container .progress-circle {
+  background: rgba(217, 169, 156, 0.14);
+}
+
+html[data-bs-theme="dark"] .dash-container .stat-mini-box {
+  background: #241e1c;
+  border-color: rgba(236, 220, 208, 0.07);
+}
+
+html[data-bs-theme="dark"] .dash-container .progress-ring-card {
+  background: #1e1918;
+}
+
+html[data-bs-theme="dark"] .dash-container .btn-warm-action:hover {
+  color: #f3e2d6;
+}
+
+/* Routine planner */
+html[data-bs-theme="dark"] .routine-page {
+  --routine-brown: #ecdcd0;
+  --routine-brown-light: rgba(236, 220, 208, 0.62);
+  --routine-accent: #d9a99c;
+  --routine-accent-strong: #cd9c8b;
+  --routine-border: rgba(236, 220, 208, 0.12);
+  color: var(--routine-brown);
+}
+
+html[data-bs-theme="dark"] .routine-page .routine-card {
+  background: #1e1918;
+  border-color: rgba(236, 220, 208, 0.12);
+}
+
+html[data-bs-theme="dark"] .routine-page .note-box {
+  background: linear-gradient(140deg, #231d1c 0%, #1e1918 100%);
+}
+
+html[data-bs-theme="dark"] .rp-step-card,
+html[data-bs-theme="dark"] .rp-panel-item,
+html[data-bs-theme="dark"] .rp-weekly-item,
+html[data-bs-theme="dark"] .rp-checkbox,
+html[data-bs-theme="dark"] .rp-progress-stats {
+  background: #1e1918;
+}
+
+html[data-bs-theme="dark"] .rp-step-card {
+  background: linear-gradient(180deg, rgba(236, 220, 208, 0.06), #1e1918);
+  border-color: rgba(236, 220, 208, 0.12);
+}
+
+html[data-bs-theme="dark"] .rp-panel-item {
+  background: linear-gradient(180deg, rgba(236, 220, 208, 0.05), #1e1918);
+}
+
+html[data-bs-theme="dark"] .rp-tip-card {
+  background: radial-gradient(circle at top, rgba(232, 184, 148, 0.14), transparent 65%), #1e1918;
+}
+
+/* Skin questionnaire */
+html[data-bs-theme="dark"] .skin-questionnaire-page {
+  background: #141110;
+}
+
+html[data-bs-theme="dark"] .answer-card {
+  background: #241e1c;
+  border-color: rgba(236, 220, 208, 0.12);
+}
+
+html[data-bs-theme="dark"] .answer-card:hover {
+  background: #292220;
+}
+
+html[data-bs-theme="dark"] .answer-card.selected {
+  background: linear-gradient(135deg, #2f2523 0%, #342824 100%);
+}
+
+html[data-bs-theme="dark"] .what-you-get {
+  background: linear-gradient(135deg, #231d1c 0%, #1e1918 100%);
+}
+
+html[data-bs-theme="dark"] .btn-previous:hover {
+  background: #332823;
+  color: #ecdcd0;
+}
+
+/* Recommendations */
+html[data-bs-theme="dark"] .rec-dashboard .overview-panel.alt,
+html[data-bs-theme="dark"] .rec-dashboard .note-card.alt,
+html[data-bs-theme="dark"] .rec-dashboard .ingredient-chip {
+  background: #1e1918;
+}
+
+/* Topbar (header) */
+html[data-bs-theme="dark"] .dh-topbar {
+  background: rgba(20, 17, 16, 0.9);
+  border-bottom-color: rgba(236, 220, 208, 0.08);
+}
+
+html[data-bs-theme="dark"] .dh-icon-btn {
+  background: #241e1c;
+  border-color: rgba(236, 220, 208, 0.12);
+  color: #ecdcd0;
+  box-shadow: none;
+}
+
+html[data-bs-theme="dark"] .dh-icon-btn:hover,
+html[data-bs-theme="dark"] .dh-icon-btn:focus-visible {
+  background: #332823;
+  border-color: rgba(236, 220, 208, 0.2);
+  color: #f3e2d6;
+}
+
+html[data-bs-theme="dark"] .dh-notif-badge {
+  background: rgba(236, 220, 208, 0.16);
+  color: #ecdcd0;
+}
+
+html[data-bs-theme="dark"] .dh-topbar-menu {
+  background: #1e1918;
+  border-color: rgba(236, 220, 208, 0.12);
+  box-shadow: 0 24px 48px -18px rgba(0, 0, 0, 0.65);
+}
+
+html[data-bs-theme="dark"] .dh-menu-header {
+  color: #ecdcd0;
+}
+
+html[data-bs-theme="dark"] .dh-menu-count {
+  background: rgba(236, 220, 208, 0.12);
+  color: rgba(236, 220, 208, 0.72);
+}
+
+html[data-bs-theme="dark"] .dh-notification-item {
+  color: #ecdcd0;
+}
+
+html[data-bs-theme="dark"] .dh-notification-item:hover,
+html[data-bs-theme="dark"] .dh-notification-item:focus {
+  background: #292220;
+  color: #f3e2d6;
+}
+
+html[data-bs-theme="dark"] .dh-notification-text,
+html[data-bs-theme="dark"] .dh-empty-state {
+  color: rgba(236, 220, 208, 0.62);
+}
+
+html[data-bs-theme="dark"] .dh-empty-state i {
+  color: rgba(236, 220, 208, 0.35);
+}
+
+html[data-bs-theme="dark"] .dh-account-name {
+  color: #ecdcd0;
+}
+
+html[data-bs-theme="dark"] .dh-account-role {
+  color: rgba(236, 220, 208, 0.62);
+}
+
+html[data-bs-theme="dark"] .dh-account-caret {
+  color: rgba(236, 220, 208, 0.5);
+}
+
+html[data-bs-theme="dark"] .dh-menu-divider {
+  border-color: rgba(236, 220, 208, 0.1);
+}
+
+html[data-bs-theme="dark"] .dh-menu-link {
+  color: #ecdcd0;
+}
+
+html[data-bs-theme="dark"] .dh-menu-link:hover {
+  background: #292220;
+  color: #f3e2d6;
+}
+
+/* Messages */
+html[data-bs-theme="dark"] .alert {
+  background: #241e1c;
+  border-color: rgba(236, 220, 208, 0.14);
+  color: #ecdcd0;
+}
+
+html[data-bs-theme="dark"] .alert-warning {
+  background: rgba(242, 185, 156, 0.12);
+  border-color: rgba(242, 185, 156, 0.35);
+  color: #f5d9c4;
+}
+
+html[data-bs-theme="dark"] .alert-success {
+  background: rgba(143, 174, 140, 0.14);
+  border-color: rgba(143, 174, 140, 0.4);
+  color: #cfe3cc;
+}
+
+/* Topbar extras */
+html[data-bs-theme="dark"] .dh-account-btn {
+  background: #241e1c;
+  border-color: rgba(236, 220, 208, 0.12);
+  color: #ecdcd0;
+  box-shadow: none;
+}
+
+html[data-bs-theme="dark"] .dh-account-btn:hover {
+  background: #332823;
+  border-color: rgba(236, 220, 208, 0.2);
+  color: #f3e2d6;
+}
+
+html[data-bs-theme="dark"] .dh-notif-badge {
+  border-color: rgba(20, 17, 16, 0.9);
+}
+
+/* Form controls on light-styled pages (e.g. My Profile) */
+html[data-bs-theme="dark"] .profile-page .form-control,
+html[data-bs-theme="dark"] .profile-page .form-select {
+  background-color: #241e1c;
+  border-color: rgba(236, 220, 208, 0.16);
+  color: #ecdcd0;
+}
+
+html[data-bs-theme="dark"] .profile-page .form-control::placeholder {
+  color: rgba(236, 220, 208, 0.4);
+}
+
+html[data-bs-theme="dark"] .profile-page .form-control:focus,
+html[data-bs-theme="dark"] .profile-page .form-select:focus {
+  background-color: #241e1c;
+  color: #ecdcd0;
+}
+
+/* Dashboard elements with inline light styles */
+html[data-bs-theme="dark"] .dash-container .dash-card[style] {
+  background: linear-gradient(135deg, #231d1c 0%, #1e1918 100%) !important;
+}
+
+html[data-bs-theme="dark"] .dash-container a.btn[style] {
+  background: #ecdcd0 !important;
+  color: #141110 !important;
+}
+
+html[data-bs-theme="dark"] .dash-container .progress-circle[style] {
+  border-top-color: #d9a99c !important;
+}
+
+/* Assessment compare inline warning card */
+html[data-bs-theme="dark"] .ah-card[style] {
+  background: rgba(242, 185, 156, 0.14) !important;
+  border-color: rgba(242, 185, 156, 0.45) !important;
+}
+
+/* Assessment history accents using raw light gradients */
+html[data-bs-theme="dark"] .ah-btn-primary,
+html[data-bs-theme="dark"] .ah-btn-primary:hover,
+html[data-bs-theme="dark"] .ah-summary-icon,
+html[data-bs-theme="dark"] .ah-skin-badge {
+  background: linear-gradient(180deg, #e8b894, #cd9c8b);
+  color: #4a352c;
+}
+
+/* Recommendations accents */
+html[data-bs-theme="dark"] .rec-dashboard .eyebrow,
+html[data-bs-theme="dark"] .rp-eyebrow {
+  background: rgba(232, 184, 148, 0.16);
+  color: #e8b894;
+}
+
+html[data-bs-theme="dark"] .rec-dashboard .routine-card-header {
+  background: linear-gradient(90deg, rgba(232, 184, 148, 0.16), transparent);
+}
+
+html[data-bs-theme="dark"] .rec-dashboard .routine-card-header.evening {
+  background: linear-gradient(90deg, rgba(236, 220, 208, 0.1), transparent);
+}
+
+html[data-bs-theme="dark"] .rec-dashboard .pill {
+  background: rgba(236, 220, 208, 0.1);
+}
+
+html[data-bs-theme="dark"] .rec-dashboard .routine-icon,
+html[data-bs-theme="dark"] .rec-dashboard .note-icon {
+  background: #2a2321;
+}
+
+/* Routine planner icons */
+html[data-bs-theme="dark"] .rp-step-icon {
+  background: rgba(232, 184, 148, 0.14);
+}
+
+/* Auth pages (login / register) */
+html[data-bs-theme="dark"] body.auth-body {
+  --auth-cream: #141110;
+  --auth-cream-deep: #1b1615;
+  --auth-brown: #ecdcd0;
+  --auth-brown-dark: #ecdcd0;
+  --auth-brown-soft: rgba(236, 220, 208, 0.62);
+  --auth-text: #ecdcd0;
+  --auth-muted: rgba(236, 220, 208, 0.6);
+  --auth-border: rgba(236, 220, 208, 0.12);
+  --auth-white: #1e1918;
+}
+
+html[data-bs-theme="dark"] .auth-form-panel {
+  background: radial-gradient(circle at 100% 0%, rgba(232, 184, 148, 0.08) 0%, transparent 48%), #141110;
+}
+
+html[data-bs-theme="dark"] .auth-brand-mark,
+html[data-bs-theme="dark"] .auth-mobile-brand .auth-brand-mark {
+  background: linear-gradient(145deg, #e8b894, #cd9c8b);
+  color: #4a352c;
+}
+
+html[data-bs-theme="dark"] .auth-input-group .form-control {
+  background: #241e1c;
+  border-color: rgba(236, 220, 208, 0.16);
+  color: #ecdcd0;
+}
+
+html[data-bs-theme="dark"] .auth-input-group .form-control:hover {
+  border-color: rgba(236, 220, 208, 0.28);
+}
+
+html[data-bs-theme="dark"] .auth-input-group .form-control:focus {
+  background: #241e1c;
+  color: #ecdcd0;
+}
+
+html[data-bs-theme="dark"] .auth-input-group .form-control::placeholder {
+  color: rgba(236, 220, 208, 0.4);
+}
+
+html[data-bs-theme="dark"] .auth-toggle-password {
+  border-color: rgba(236, 220, 208, 0.16);
+}
+
+html[data-bs-theme="dark"] .auth-alert {
+  background: rgba(157, 77, 67, 0.18);
+  color: #f0b7ae;
+}
+
+html[data-bs-theme="dark"] .auth-btn,
+html[data-bs-theme="dark"] .auth-btn:hover,
+html[data-bs-theme="dark"] .auth-btn:focus {
+  background: linear-gradient(180deg, #a3786a 0%, #8a6353 100%);
+  color: #fffaf6;
+}

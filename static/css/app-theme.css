@@ -228,21 +228,21 @@ html {
 
 
 .dh-sidebar {
-  --tblr-navbar-bg: #1b5e20;
-  --tblr-navbar-border-color: rgba(255, 255, 255, 0.10);
-  --tblr-navbar-color: rgba(255, 255, 255, 0.80);
-  --tblr-navbar-hover-color: #ffffff;
-  --tblr-navbar-active-color: #ffffff;
-  --tblr-navbar-disabled-color: rgba(255, 255, 255, 0.40);
-  --tblr-navbar-active-bg: #388e3c;
+  --tblr-navbar-bg: #d4a395;
+  --tblr-navbar-border-color: rgba(92, 67, 56, 0.1);
+  --tblr-navbar-color: rgba(92, 67, 56, 0.75);
+  --tblr-navbar-hover-color: #5c4338;
+  --tblr-navbar-active-color: #5c4338;
+  --tblr-navbar-disabled-color: rgba(92, 67, 56, 0.35);
+  --tblr-navbar-active-bg: #c89688;
 
   background:
     radial-gradient(
       120% 70% at 100% 0%,
-      rgba(129, 199, 132, 0.18) 0%,
+      rgba(221, 172, 160, 0.85) 0%,
       transparent 55%
     ),
-    linear-gradient(180deg, #2e7d32 0%, #1b5e20 100%);
+    linear-gradient(180deg, #d4a395 0%, #c29183 100%);
 }
 
 
@@ -261,8 +261,8 @@ html {
   border-radius: 0.75rem;
   color: #fff;
   font-size: 1rem;
-  background: linear-gradient(135deg, #66bb6a 0%, #2e7d32 100%);
-box-shadow: 0 6px 16px -6px rgba(76, 175, 80, 0.65);
+  background: linear-gradient(135deg, #d9a99c 0%, #CD9C8B 100%);
+  box-shadow: 0 6px 16px -6px rgba(205, 156, 139, 0.65);
 }
 
 .dh-brand-name {
@@ -270,7 +270,7 @@ box-shadow: 0 6px 16px -6px rgba(76, 175, 80, 0.65);
   font-weight: 800;
   font-size: 1.05rem;
   letter-spacing: -0.02em;
-  color: #ffffff;
+  color: #5c4338;
   line-height: 1.15;
 }
 
@@ -280,7 +280,7 @@ box-shadow: 0 6px 16px -6px rgba(76, 175, 80, 0.65);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(92, 67, 56, 0.60);
 }
 
 .dh-nav-section {
@@ -290,7 +290,7 @@ box-shadow: 0 6px 16px -6px rgba(76, 175, 80, 0.65);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.38);
+  color: rgba(92, 67, 56, 0.50);
 }
 
 .dh-sidebar .navbar-nav .nav-link {
@@ -305,21 +305,22 @@ box-shadow: 0 6px 16px -6px rgba(76, 175, 80, 0.65);
 
 .dh-sidebar .navbar-nav .nav-link:hover {
   color: var(--tblr-navbar-hover-color);
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .dh-sidebar .navbar-nav .nav-link.active {
-  color: #ffffff;
+  color: #3b2820;
   background-image: linear-gradient(
     135deg,
-    #66bb6a 0%,
-    #388e3c 100%
+    #ebd3c4 0%,
+    #dfb6a5 100%
   );
-  box-shadow: 0 8px 18px -8px rgba(76, 175, 80, 0.55);
+  box-shadow: 0 8px 18px -8px rgba(92, 67, 56, 0.35);
+  font-weight: 700;
 }
 
 .dh-sidebar .navbar-nav .nav-link.active .nav-link-title {
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .dh-sidebar .nav-link-icon {
@@ -375,9 +376,9 @@ box-shadow: 0 6px 16px -6px rgba(76, 175, 80, 0.65);
   margin: 1rem 0.75rem 0.75rem;
   padding: 0.75rem;
   border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  color: #ffffff;
+  background: rgba(92, 67, 56, 0.05);
+  border: 1px solid rgba(92, 67, 56, 0.10);
+  color: #5c4338;
 }
 
 .dh-user-card:hover {
@@ -404,7 +405,7 @@ box-shadow: 0 6px 16px -6px rgba(76, 175, 80, 0.65);
   font-size: 0.85rem;
   font-weight: 600;
   line-height: 1.2;
-  color: #ffffff;
+  color: #5c4338;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -413,7 +414,7 @@ box-shadow: 0 6px 16px -6px rgba(76, 175, 80, 0.65);
 .dh-user-role {
   display: block;
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(92, 67, 56, 0.65);
 }
 
 .dh-user-logout {
