@@ -241,6 +241,58 @@ STEP_META = {
     },
 }
 
+# What each common skincare ingredient does, for the plain-language
+# explanations shown on the My Routine page.
+INGREDIENT_PURPOSES = {
+    'Glycerin': 'Draws water into the skin and keeps it hydrated.',
+    'Ceramides': 'Repair and strengthen the skin barrier.',
+    'Allantoin': 'Soothes rough or irritated skin and supports healing.',
+    'Salicylic Acid': 'Gently exfoliates inside pores to clear oil and blackheads.',
+    'Zinc PCA': 'Controls excess oil and calms redness.',
+    'Oat Extract': 'Comforts dry, itchy, or easily irritated skin.',
+    'Hyaluronic Acid': 'Plumps and deeply hydrates without feeling heavy.',
+    'Panthenol': 'Pro-vitamin B5 that soothes and supports skin repair.',
+    'Centella Asiatica': 'Calms redness and helps stressed skin recover.',
+    'Madecassoside': 'Soothes irritation from centella and supports healing.',
+    'Vitamin C': 'Brightens dull skin and evens out tone.',
+    'Ferulic Acid': 'Antioxidant that keeps vitamin C stable and effective.',
+    'Vitamin E': 'Antioxidant that protects and conditions the skin.',
+    'Niacinamide': 'Balances oil, refines pores, and supports the skin barrier.',
+    'Squalane': 'Lightweight lipid that softens and seals in moisture.',
+    'Shea Butter': 'Rich moisturizer for dry, tight skin.',
+    'Zinc Oxide': 'Mineral filter that protects against UVA/UVB damage.',
+    'Witch Hazel': 'Mild plant extract that helps control oil and tighten pores.',
+    'Green Tea': 'Antioxidant that helps calm oiliness and redness.',
+    'Retinol': 'Smooths texture and softens fine lines over time.',
+    'Peptides': 'Support firmness and hydrate the delicate eye area.',
+}
+
+
+def _ingredient_details(user):
+    """Ingredients from the user's routines with a short purpose each."""
+    from .models import SkincareRoutine
+
+    details = {}
+    for routine in SkincareRoutine.objects.filter(
+        user=user
+    ).prefetch_related('steps__product'):
+        for step in routine.steps.all():
+            if not step.product.ingredients:
+                continue
+            for name in step.product.ingredients.replace('\n', ',').split(','):
+                name = name.strip()
+                if not name:
+                    continue
+                if name not in details:
+                    details[name] = {
+                        'name': name,
+                        'purpose': INGREDIENT_PURPOSES.get(
+                            name, 'Keeps your routine gentle and effective.'
+                        ),
+                    }
+    return list(details.values())[:12]
+
+
 QUESTION_TITLES = {
     'q1': 'Skin feel after cleansing',
     'q2': 'Shininess throughout the day',
@@ -250,6 +302,15 @@ QUESTION_TITLES = {
     'q6': 'Skin in different weather',
     'q7': 'Main skin concern',
     'q8': 'Current skincare routine',
+    'ai_primary_skin_type': 'AI estimate: primary skin type',
+    'ai_sensitivity_level': 'AI estimate: sensitivity level',
+    'ai_summary': 'AI summary',
+    'ai_observations': 'Observations from the conversation',
+    'ai_morning_routine': 'Suggested morning routine',
+    'ai_evening_routine': 'Suggested evening routine',
+    'ai_ingredients': 'Ingredients to look for',
+    'ai_precautions': 'Precautions',
+    'ai_follow_up': 'Follow-up questions',
 }
 
 CONCERN_FROM_ANSWER = {
@@ -627,7 +688,7 @@ def logout_view(request):
 
 @login_required(login_url='login')
 def home(request):
-    from .models import SkinAnalysis, SkinProfile, SkincareProduct
+    from .models import SkinAnalysis, SkinProfile
 
     profile, _ = SkinProfile.objects.get_or_create(user=request.user)
     latest_analysis = (
@@ -661,7 +722,6 @@ def home(request):
         'total_assessments': total_assessments,
         'routine_days_this_month': _routine_days_this_month(request.user),
         'routine_streak': _routine_streak(request.user),
-        'recommended_products': SkincareProduct.objects.filter(is_active=True).count(),
         'today': date.today(),
         **snapshot,
     }
@@ -706,10 +766,10 @@ def skin_analysis(request):
         profile.save()
 
         _ensure_user_routines(request.user)
-        
+
         messages.success(request, f'Skin analysis complete! Your skin type is {skin_type.title()}.')
-        return redirect('my_recommendations')
-    
+        return redirect('routine_planner')
+
     return render(request, 'skin_analysis.html')
 
 
@@ -767,76 +827,9 @@ def determine_skin_type(answers):
 
 
 @login_required(login_url='login')
-def my_recommendations(request):
-    from .models import SkinProfile, SkinAnalysis, SkincareProduct, SkincareRoutine
-
-    profile, _ = SkinProfile.objects.get_or_create(user=request.user)
-    latest_analysis = (
-        SkinAnalysis.objects.filter(user=request.user)
-        .order_by('-created_at')
-        .first()
-    )
-
-    _ensure_user_routines(request.user)
-
-    # Get routines for the user by type
-    morning_routines = SkincareRoutine.objects.filter(
-        user=request.user, routine_type='morning'
-    ).prefetch_related('steps__product')
-    evening_routines = SkincareRoutine.objects.filter(
-        user=request.user, routine_type='night'
-    ).prefetch_related('steps__product')
-
-    # Collect recommended ingredients from products in routines
-    recommended_ingredients_set = set()
-    for routine in list(morning_routines) + list(evening_routines):
-        for step in routine.steps.all():
-            prod = step.product
-            if prod.ingredients:
-                # Split by comma/newline for a cleaner list
-                for ing in prod.ingredients.replace('\n', ',').split(','):
-                    ing_clean = ing.strip()
-                    if ing_clean:
-                        recommended_ingredients_set.add(ing_clean)
-
-    recommended_ingredients = sorted(list(recommended_ingredients_set))[:12]
-
-    # Build AI explanations and tips
-    skin_type_display = profile.get_skin_type_display() if profile.skin_type != 'unknown' else 'Not Yet Identified'
-    concerns = profile.concerns or (latest_analysis.notes if latest_analysis and latest_analysis.notes else '')
-
-    ai_explanations = [
-        f"Your skin type is identified as {skin_type_display}. Our system tailors product selection to balance your skin's unique needs.",
-        "We prioritize gentle actives and barrier-supporting ingredients to minimize irritation while addressing your concerns.",
-        "Consistency is key - following AM/PM routines helps maintain hydration and protection throughout the day.",
-    ]
-
-    personalized_tips = [
-        "Always apply sunscreen as the last step of your morning routine.",
-        "Patch test new products on a small area before full application.",
-        "Stay hydrated and maintain a balanced diet to support skin health.",
-        "Adjust your routine with seasons - your skin may need more moisture in winter.",
-    ]
-
-    important_notes = [
-        "If you experience persistent irritation, discontinue use and consult a dermatologist.",
-        "Introduce new actives (like exfoliants/retinoids) gradually, 1-2 times per week.",
-        "Store products away from direct sunlight to maintain efficacy.",
-    ]
-
-    context = {
-        'profile': profile,
-        'latest_analysis': latest_analysis,
-        'skin_type_display': skin_type_display,
-        'concerns': concerns,
-        'morning_routines': morning_routines,
-        'evening_routines': evening_routines,
-        'recommended_ingredients': recommended_ingredients,
-        'ai_explanations': ai_explanations,
-        'personalized_tips': personalized_tips,
-        'important_notes': important_notes,
-    }
-    return render(request, 'my_recommendations.html', context)
+def my_recommendations_redirect(request):
+    """The old My Recommendations page was combined into My Routine."""
+    return redirect('routine_planner')
 
 
 @login_required(login_url='login')
@@ -901,87 +894,660 @@ def routine_planner(request):
         'all_products': SkincareProduct.objects.filter(is_active=True).order_by(
             'category', 'name'
         ),
+        'ingredient_details': _ingredient_details(request.user),
+        'routine_tips': [
+            'Always apply sunscreen as the last step of your morning routine.',
+            'Patch test new products on a small area before full application.',
+            'Stay hydrated and maintain a balanced diet to support skin health.',
+            'Adjust your routine with seasons. Your skin may need more moisture in winter.',
+        ],
+        'important_notes': [
+            'If you experience persistent irritation, discontinue use and consult a dermatologist.',
+            'Introduce new actives (like exfoliants or retinoids) gradually, 1-2 times per week.',
+        ],
         'today': date.today(),
         **snapshot,
     }
     return render(request, 'routine_planner.html', context)
 
 
-@login_required(login_url='login')
-def assessment_history(request):
-    from .models import SkinAnalysis
+# ---------------------------------------------------------------------------
+# Skin Progress History
+# ---------------------------------------------------------------------------
 
-    user = request.user
-    analyses = (
-        SkinAnalysis.objects.filter(user=user)
-        .order_by('-created_at')
+CHECKIN_RATING_FIELDS = ['oiliness', 'dryness', 'acne_level', 'irritation']
+
+RATING_DESCRIPTIONS = {
+    1: '1 - None / Very low',
+    2: '2 - Mild',
+    3: '3 - Moderate',
+    4: '4 - Noticeable',
+    5: '5 - Severe / Very high',
+}
+
+CONDITION_SCORES = {
+    'excellent': 5,
+    'good': 4,
+    'average': 3,
+    'rough': 2,
+    'irritated': 2,
+    'breaking_out': 2,
+}
+
+ALLOWED_PHOTO_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp'}
+MAX_PHOTO_SIZE_MB = 5
+
+
+def _parse_range(request):
+    """Return (range_key, range_start) from ?range= 7 | 30 | 90 | all."""
+    key = request.GET.get('range', '30')
+    days = {'7': 7, '30': 30, '90': 90}.get(key)
+    if days:
+        return days, date.today() - timedelta(days=days - 1)
+    return 'all', None
+
+
+def _checkin_streak(user):
+    """Count consecutive days (ending today or yesterday) with a check-in."""
+    from .models import DailyCheckIn
+
+    checkin_dates = set(
+        DailyCheckIn.objects.filter(user=user).values_list('date', flat=True)
+    )
+    today = date.today()
+    cursor = today if today in checkin_dates else today - timedelta(days=1)
+    streak = 0
+    while cursor in checkin_dates:
+        streak += 1
+        cursor -= timedelta(days=1)
+    return streak
+
+
+def _routine_consistency(user, start_date=None):
+    """Average percentage of routine steps completed by the user."""
+    from .models import RoutineProgress, SkincareRoutine
+
+    entries = RoutineProgress.objects.filter(user=user)
+    if start_date:
+        entries = entries.filter(date__gte=start_date)
+    if not entries.exists():
+        return None
+
+    step_counts = {
+        routine.id: routine.steps.count()
+        for routine in SkincareRoutine.objects.filter(user=user)
+    }
+    total_done = 0
+    total_steps = 0
+    for entry in entries:
+        count = step_counts.get(entry.routine_id, 0)
+        if not count:
+            continue
+        completed = min(len(entry.completed_steps or []), count)
+        total_done += completed
+        total_steps += count
+    if not total_steps:
+        return None
+    return int(total_done / total_steps * 100)
+
+
+def _build_progress_calendar(user, anchor):
+    """Build a Monday-first month grid marked with check-in/completion flags."""
+    from .models import DailyCheckIn, RoutineProgress, SkincareRoutine
+
+    import calendar
+
+    month_range = calendar.monthrange(anchor.year, anchor.month)
+    first_day = date(anchor.year, anchor.month, 1)
+    last_day = date(anchor.year, anchor.month, month_range[1])
+
+    checkin_days = set(
+        DailyCheckIn.objects.filter(user=user, date__range=(first_day, last_day))
+        .values_list('date', flat=True)
+    )
+    photo_days = set(
+        DailyCheckIn.objects.filter(
+            user=user, date__range=(first_day, last_day)
+        )
+        .exclude(photo='')
+        .exclude(photo__isnull=True)
+        .values_list('date', flat=True)
     )
 
-    total_assessments = analyses.count()
+    routine_ids = list(
+        SkincareRoutine.objects.filter(user=user).values_list('id', flat=True)
+    )
+    routine_days = set()
+    if routine_ids:
+        entries = RoutineProgress.objects.filter(
+            user=user, routine_id__in=routine_ids,
+            date__range=(first_day, last_day), completed=True,
+        )
+        step_counts = {
+            routine.id: routine.steps.count()
+            for routine in SkincareRoutine.objects.filter(user=user)
+        }
+        for entry in entries:
+            if step_counts.get(entry.routine_id, 0) and len(
+                entry.completed_steps or []
+            ) >= step_counts[entry.routine_id]:
+                routine_days.add(entry.date)
+
+    weeks = calendar.Calendar(firstweekday=0).monthdayscalendar(
+        anchor.year, anchor.month
+    )
+    today = date.today()
+    calendar_weeks = []
+    for week in weeks:
+        row = []
+        for day_number in week:
+            if day_number == 0:
+                row.append(None)
+                continue
+            day = date(anchor.year, anchor.month, day_number)
+            row.append({
+                'date': day,
+                'iso': day.isoformat(),
+                'number': day_number,
+                'is_today': day == today,
+                'is_future': day > today,
+                'has_checkin': day in checkin_days,
+                'has_photo': day in photo_days,
+                'routine_done': day in routine_days,
+            })
+        calendar_weeks.append(row)
+
+    prev_month = (first_day - timedelta(days=1))
+    next_month = last_day + timedelta(days=1)
+    return {
+        'anchor': anchor,
+        'month_label': anchor.strftime('%B %Y'),
+        'weeks': calendar_weeks,
+        'prev_month': prev_month.strftime('%Y-%m'),
+        'next_month': next_month.strftime('%Y-%m'),
+    }
+
+
+def _recommended_ingredients(user):
+    """Ingredients from products used in the user's routines."""
+    from .models import SkincareRoutine
+
+    ingredients_set = set()
+    routines = SkincareRoutine.objects.filter(
+        user=user
+    ).prefetch_related('steps__product')
+    for routine in routines:
+        for step in routine.steps.all():
+            if step.product.ingredients:
+                for ing in step.product.ingredients.replace('\n', ',').split(','):
+                    cleaned = ing.strip()
+                    if cleaned:
+                        ingredients_set.add(cleaned)
+    return sorted(ingredients_set)[:24]
+
+
+def _validate_progress_photo(upload):
+    """Validate an optional skin progress photo. Returns an error or None."""
+    if upload is None:
+        return None
+    import os
+
+    from PIL import Image
+
+    max_bytes = MAX_PHOTO_SIZE_MB * 1024 * 1024
+    if upload.size > max_bytes:
+        return f'Photo is too large. Maximum size is {MAX_PHOTO_SIZE_MB}MB.'
+    extension = os.path.splitext(upload.name or '')[1].lower()
+    if extension not in ALLOWED_PHOTO_EXTENSIONS:
+        return 'Photo must be a JPG, PNG, or WEBP image.'
+    try:
+        Image.open(upload).verify()
+    except Exception:
+        return 'That file does not look like a valid image.'
+    finally:
+        try:
+            upload.seek(0)
+        except Exception:
+            pass
+    return None
+
+
+def _timeline_events(user, range_start):
+    """Merge assessments and check-ins into one chronological timeline."""
+    from .models import DailyCheckIn, SkinAnalysis
+
+    events = []
+    analyses = SkinAnalysis.objects.filter(user=user).order_by('created_at')
+    for analysis in analyses:
+        local_time = timezone.localtime(analysis.created_at)
+        events.append({
+            'kind': 'assessment',
+            'date': local_time.date(),
+            'datetime': local_time,
+            'analysis': analysis,
+        })
+
+    checkins = DailyCheckIn.objects.filter(user=user)
+    if range_start:
+        checkins = checkins.filter(date__gte=range_start)
+    for checkin in checkins:
+        events.append({
+            'kind': 'checkin',
+            'date': checkin.date,
+            'datetime': checkin.created_at,
+            'checkin': checkin,
+        })
+
+    events.sort(key=lambda e: e['datetime'], reverse=True)
+    return events
+
+
+@login_required(login_url='login')
+def skin_progress_history(request):
+    """Skin Progress History dashboard (was Assessment History)."""
+    from .models import DailyCheckIn, IngredientExperience, SkinAnalysis, SkinProfile
+
+    user = request.user
+    profile, _ = SkinProfile.objects.get_or_create(user=user)
+    range_key, range_start = _parse_range(request)
+    today = date.today()
+
+    all_checkins = DailyCheckIn.objects.filter(user=user)
+    latest_checkin = all_checkins.first()
+    analyses = SkinAnalysis.objects.filter(user=user).order_by('-created_at')
     latest_analysis = analyses.first()
 
-    # Calculate most common skin type
+    # Most common identified skin type across all assessments (milestones).
     skin_type_counts = {}
     for analysis in analyses:
-        st = analysis.identified_skin_type
-        if st:
-            skin_type_counts[st] = skin_type_counts.get(st, 0) + 1
-
-    most_common_skin_type = None
-    most_common_count = 0
-    for st, count in skin_type_counts.items():
-        if count > most_common_count:
-            most_common_count = count
-            most_common_skin_type = st
-
-    # Get display names
-    skin_type_display_map = dict(SkinAnalysis._meta.get_field('identified_skin_type').choices)
+        skin_type_counts[analysis.identified_skin_type] = (
+            skin_type_counts.get(analysis.identified_skin_type, 0) + 1
+        )
+    most_common_skin_type = max(
+        skin_type_counts,
+        key=skin_type_counts.get,
+        default=None,
+    )
+    skin_type_display_map = dict(
+        SkinAnalysis._meta.get_field('identified_skin_type').choices
+    )
+    most_common_skin_type_display = skin_type_display_map.get(most_common_skin_type)
     latest_skin_type_display = (
         skin_type_display_map.get(latest_analysis.identified_skin_type)
         if latest_analysis
         else None
     )
-    most_common_skin_type_display = (
-        skin_type_display_map.get(most_common_skin_type)
-        if most_common_skin_type
-        else None
-    )
 
-    # Prepare chart data
+    # Skin type trend chart data (kept from the old assessment history page).
     chart_data = []
     for analysis in analyses.order_by('created_at'):
         chart_data.append({
             'date': analysis.created_at.strftime('%Y-%m-%d'),
             'skin_type': analysis.identified_skin_type,
-            'skin_type_display': skin_type_display_map.get(analysis.identified_skin_type, analysis.identified_skin_type),
+            'skin_type_display': skin_type_display_map.get(
+                analysis.identified_skin_type, analysis.identified_skin_type
+            ),
         })
 
-    # Generate journey explanation
+    # Skin condition chart series built from real check-in records.
+    range_checkins = all_checkins.order_by('date')
+    if range_start:
+        range_checkins = range_checkins.filter(date__gte=range_start)
+    chart_labels = [c.date.strftime('%b %d') for c in range_checkins]
+    chart_series = {
+        'oiliness': [c.oiliness for c in range_checkins],
+        'dryness': [c.dryness for c in range_checkins],
+        'acne_level': [c.acne_level for c in range_checkins],
+        'irritation': [c.irritation for c in range_checkins],
+    }
+    condition_scores = [CONDITION_SCORES.get(c.skin_condition, 3) for c in range_checkins]
+
+    # Verdict: does the routine appear to be helping? Compares the average
+    # skin-condition score from the first half of the range with the second
+    # half. Scores go from 1 (worst) to 5 (best per CONDITION_SCORES).
+    routine_helping = None
+    if len(condition_scores) >= 3:
+        half = len(condition_scores) // 2
+        earlier = sum(condition_scores[:half]) / half
+        later = sum(condition_scores[half:]) / (len(condition_scores) - half)
+        delta = later - earlier
+        if delta >= 0.3:
+            trend = 'improving'
+        elif delta <= -0.3:
+            trend = 'declining'
+        else:
+            trend = 'stable'
+        routine_helping = {
+            'trend': trend,
+            'earlier': round(earlier, 1) if half else None,
+            'later': round(later, 1),
+            'consistency': _routine_consistency(user, range_start),
+        }
+
+    # Journey explanation (adapted from the old assessment history view).
     journey_explanation = None
-    if total_assessments == 0:
-        journey_explanation = "No assessments yet. Start your first skin analysis to begin tracking your skin journey."
-    elif total_assessments == 1:
-        journey_explanation = "This is your first assessment. Take more assessments over time to see how your skin type evolves with changes in your routine and environment."
+    if analyses.count() == 0:
+        journey_explanation = (
+            'No assessments yet. Start your first skin analysis to begin '
+            'tracking your skin journey.'
+        )
+    elif analyses.count() == 1:
+        journey_explanation = (
+            'This is your first assessment. Take more assessments over time '
+            'to see how your skin type evolves with changes in your routine '
+            'and environment.'
+        )
     else:
-        # Check if skin type changed
         skin_types_sequence = [a.identified_skin_type for a in analyses.order_by('created_at')]
         if len(set(skin_types_sequence)) == 1:
-            journey_explanation = f"Your skin type has remained consistent as {skin_type_display_map.get(skin_types_sequence[0])} across your assessments. Consistency suggests your current routine is working well for you."
+            journey_explanation = (
+                f'Your skin type has remained consistent as '
+                f'{skin_type_display_map.get(skin_types_sequence[0])} across your '
+                f'assessments. Consistency suggests your current routine is '
+                f'working well for you.'
+            )
         else:
-            journey_explanation = f"Your skin type has changed across assessments, showing how your skin responds to different factors over time. It's normal for skin conditions to evolve due to skincare habits, environment, stress, and other influences."
+            journey_explanation = (
+                'Your skin type has changed across assessments, showing how '
+                'your skin responds to different factors over time. It is '
+                'normal for skin conditions to evolve due to skincare habits, '
+                'environment, stress, hormones, and other influences.'
+            )
+
+    # Month parameter for the progress calendar.
+    month_value = request.GET.get('month', '')
+    try:
+        calendar_month = date.fromisoformat(f'{month_value}-01')
+        if not month_value:
+            raise ValueError
+    except ValueError:
+        calendar_month = today.replace(day=1)
+    calendar_data = _build_progress_calendar(user, calendar_month)
 
     context = {
-        'assessments': analyses,
-        'total_assessments': total_assessments,
-        'latest_analysis': latest_analysis,
+        # Header / controls
+        'today': today,
+        'range_key': range_key,
+        # Summary cards
+        'total_checkins': all_checkins.count(),
+        'routine_consistency': _routine_consistency(user, range_start),
+        'routine_streak': _routine_streak(user),
+        'checkin_streak': _checkin_streak(user),
+        'latest_assessment': latest_analysis,
         'latest_skin_type_display': latest_skin_type_display,
+        'latest_checkin': latest_checkin,
+        'latest_condition_display': (
+            latest_checkin.get_skin_condition_display() if latest_checkin else None
+        ),
+        'total_assessments': analyses.count(),
         'most_common_skin_type_display': most_common_skin_type_display,
-        'most_common_count': most_common_count,
+        # Charts
+        'chart_labels': chart_labels,
+        'chart_series': chart_series,
+        'condition_scores': condition_scores,
         'chart_data': chart_data,
         'journey_explanation': journey_explanation,
-        'skin_type_categories': ['Oily', 'Combination', 'Normal', 'Dry', 'Sensitive'],
+        'routine_helping': routine_helping,
+        # Daily check-ins
+        'checkin_list': all_checkins[:20],
+        'condition_choices': DailyCheckIn.CONDITION_CHOICES,
+        'rating_descriptions': RATING_DESCRIPTIONS,
+        'rating_labels': {
+            '1': 'None / Very low',
+            '2': 'Mild',
+            '3': 'Moderate',
+            '4': 'Noticeable',
+            '5': 'Severe / Very high',
+        },
+        'form_defaults': {
+            'date': today.isoformat(),
+            'skin_condition': latest_checkin.skin_condition if latest_checkin else 'average',
+            'oiliness': latest_checkin.oiliness if latest_checkin else 1,
+            'dryness': latest_checkin.dryness if latest_checkin else 1,
+            'acne_level': latest_checkin.acne_level if latest_checkin else 1,
+            'irritation': latest_checkin.irritation if latest_checkin else 1,
+        },
+        # Calendar / timeline
+        'calendar': calendar_data,
+        'timeline': _timeline_events(user, range_start),
+        # Photos
+        'photo_checkins': (
+            all_checkins.exclude(photo='').exclude(photo__isnull=True)[:12]
+        ),
+        # Ingredient experience tracker
+        'ingredient_experiences': IngredientExperience.objects.filter(user=user)[:15],
+        'recommended_ingredients': _recommended_ingredients(user),
+        # Previous assessments
+        'assessments': analyses,
+        'profile': profile,
     }
     return render(request, 'assessment_history.html', context)
+
+
+@login_required(login_url='login')
+@require_http_methods(['POST'])
+def checkin_save(request):
+    """Create or update the signed-in user's check-in for one date."""
+    from .models import DailyCheckIn
+
+    user = request.user
+    raw_date = parse_date(request.POST.get('date', '')) or timezone.localdate()
+    today = timezone.localdate()
+    if raw_date > today:
+        messages.error(request, 'You cannot record a check-in for a future date.')
+        return redirect('assessment_history')
+
+    valid_conditions = {choice[0] for choice in DailyCheckIn.CONDITION_CHOICES}
+    skin_condition = request.POST.get('skin_condition', '')
+    if skin_condition not in valid_conditions:
+        messages.error(request, 'Please choose a valid skin condition.')
+        return redirect('assessment_history')
+
+    ratings = {}
+    for field in CHECKIN_RATING_FIELDS:
+        raw_value = request.POST.get(field, '')
+        try:
+            value = int(raw_value)
+        except (TypeError, ValueError):
+            messages.error(request, 'All rating levels must be whole numbers from 1 to 5.')
+            return redirect('assessment_history')
+        if not 1 <= value <= 5:
+            messages.error(request, 'All rating levels must be between 1 and 5.')
+            return redirect('assessment_history')
+        ratings[field] = value
+
+    photo = request.FILES.get('photo')
+    photo_error = _validate_progress_photo(photo)
+    if photo_error:
+        messages.error(request, photo_error)
+        return redirect('assessment_history')
+
+    checkin, _created = DailyCheckIn.objects.get_or_create(
+        user=user,
+        date=raw_date,
+        defaults={
+            'skin_condition': skin_condition,
+            **ratings,
+            'morning_completed': request.POST.get('morning_completed') in {'on', 'true', '1'},
+            'evening_completed': request.POST.get('evening_completed') in {'on', 'true', '1'},
+            'products_used': request.POST.get('products_used', '').strip()[:2000],
+            'ingredients_used': request.POST.get('ingredients_used', '').strip()[:2000],
+            'notes': request.POST.get('notes', '').strip()[:2000],
+            'photo': photo,
+        },
+    )
+    if not _created:
+        # Updating the existing record for the same user + date.
+        checkin.skin_condition = skin_condition
+        for field in CHECKIN_RATING_FIELDS:
+            setattr(checkin, field, ratings[field])
+        checkin.morning_completed = request.POST.get('morning_completed') in {'on', 'true', '1'}
+        checkin.evening_completed = request.POST.get('evening_completed') in {'on', 'true', '1'}
+        checkin.products_used = request.POST.get('products_used', '').strip()[:2000]
+        checkin.ingredients_used = request.POST.get('ingredients_used', '').strip()[:2000]
+        checkin.notes = request.POST.get('notes', '').strip()[:2000]
+        if photo:
+            if checkin.photo:
+                try:
+                    checkin.photo.delete(save=False)
+                except Exception:
+                    pass
+            checkin.photo = photo
+    checkin.save()
+
+    if _created:
+        messages.success(request, f'Daily check-in saved for {raw_date.strftime("%B %d, %Y")}.')
+    else:
+        messages.success(request, f'Check-in for {raw_date.strftime("%B %d, %Y")} was updated.')
+    return redirect('assessment_history')
+
+
+@login_required(login_url='login')
+@require_http_methods(['POST'])
+def checkin_delete(request):
+    """Delete the signed-in user's check-in for one date."""
+    from .models import DailyCheckIn
+
+    try:
+        checkin_id = int(request.POST.get('id', ''))
+    except (TypeError, ValueError):
+        messages.error(request, 'Invalid check-in.')
+        return redirect('assessment_history')
+
+    checkin = DailyCheckIn.objects.filter(user=request.user, pk=checkin_id).first()
+    if checkin is None:
+        messages.error(request, 'Check-in not found.')
+        return redirect('assessment_history')
+
+    if checkin.photo:
+        try:
+            checkin.photo.delete(save=False)
+        except Exception:
+            pass
+    checkin.delete()
+    messages.success(request, 'Daily check-in deleted.')
+    return redirect('assessment_history')
+
+
+@login_required(login_url='login')
+@require_http_methods(['POST'])
+def checkin_photo_delete(request):
+    """Remove an uploaded progress photo, keeping the check-in record."""
+    from .models import DailyCheckIn
+
+    try:
+        checkin_id = int(request.POST.get('id', ''))
+    except (TypeError, ValueError):
+        messages.error(request, 'Invalid check-in.')
+        return redirect('assessment_history')
+
+    checkin = DailyCheckIn.objects.filter(user=request.user, pk=checkin_id).first()
+    if checkin is None or not checkin.photo:
+        messages.error(request, 'Photo not found.')
+        return redirect('assessment_history')
+    try:
+        checkin.photo.delete(save=False)
+    except Exception:
+        pass
+    checkin.photo = None
+    checkin.save(update_fields=['photo', 'updated_at'])
+    messages.success(request, 'Progress photo removed.')
+    return redirect('assessment_history')
+
+
+@login_required(login_url='login')
+@require_http_methods(['GET'])
+def checkin_day_details(request):
+    """JSON details for everything saved on one date (calendar day click)."""
+    from .models import DailyCheckIn, IngredientExperience, SkinAnalysis
+
+    day = parse_date(request.GET.get('date', ''))
+    if not day:
+        return JsonResponse({'success': False, 'error': 'Invalid date.'}, status=400)
+
+    checkin = DailyCheckIn.objects.filter(user=request.user, date=day).first()
+    analysis = (
+        SkinAnalysis.objects.filter(user=request.user, created_at__date=day)
+        .order_by('-created_at')
+        .first()
+    )
+    experiences = IngredientExperience.objects.filter(
+        user=request.user, created_at__date=day
+    )
+
+    data = {
+        'success': True,
+        'date': day.isoformat(),
+        'display_date': day.strftime('%B %d, %Y'),
+        'checkin': None,
+        'assessment': None,
+        'experiences': [
+            {
+                'ingredient': item.ingredient,
+                'outcome': item.get_outcome_display(),
+                'comment': item.comment,
+            }
+            for item in experiences
+        ],
+    }
+    if checkin:
+        data['checkin'] = {
+            'date': checkin.date.isoformat(),
+            'skin_condition': checkin.get_skin_condition_display(),
+            'skin_condition_value': checkin.skin_condition,
+            'oiliness': checkin.oiliness,
+            'dryness': checkin.dryness,
+            'acne_level': checkin.acne_level,
+            'irritation': checkin.irritation,
+            'morning_completed': checkin.morning_completed,
+            'evening_completed': checkin.evening_completed,
+            'products_used': checkin.products_used,
+            'ingredients_used': checkin.ingredients_used,
+            'notes': checkin.notes,
+            'photo': checkin.photo.url if checkin.photo else None,
+        }
+    if analysis:
+        data['assessment'] = {
+            'id': analysis.pk,
+            'method': analysis.get_method_display(),
+            'skin_type': analysis.get_identified_skin_type_display(),
+            'created_at': timezone.localtime(analysis.created_at).strftime('%I:%M %p'),
+        }
+    return JsonResponse(data)
+
+
+@login_required(login_url='login')
+@require_http_methods(['POST'])
+def ingredient_experience_save(request):
+    """Save the user's personal observation about an ingredient they used."""
+    from .models import IngredientExperience
+
+    outcome_choices = {choice[0] for choice in IngredientExperience.OUTCOME_CHOICES}
+    ingredient = (
+        request.POST.get('ingredient')
+        or request.POST.get('ingredient_other')
+        or ''
+    ).strip()
+    if len(ingredient) > 150:
+        ingredient = ingredient[:150]
+    outcome = request.POST.get('outcome', '')
+    comment = request.POST.get('comment', '').strip()[:1000]
+
+    if not ingredient:
+        messages.error(request, 'Please choose or type the ingredient you used.')
+        return redirect('assessment_history')
+    if outcome not in outcome_choices:
+        messages.error(request, 'Please choose a valid outcome.')
+        return redirect('assessment_history')
+
+    IngredientExperience.objects.create(
+        user=request.user,
+        ingredient=ingredient,
+        outcome=outcome,
+        comment=comment,
+    )
+    messages.success(request, 'Ingredient experience saved. Personal observations only - results vary from person to person.')
+    return redirect('assessment_history')
 
 
 @login_required(login_url='login')
@@ -998,10 +1564,16 @@ def assessment_detail(request, pk):
     if analysis.answers:
         for key in sorted(analysis.answers.keys()):
             raw_value = analysis.answers.get(key, '')
-            display_value = str(raw_value).replace('_', ' ').title()
+            if key.startswith('ai_'):
+                # AI answers are already readable prose; do not title-case them.
+                display_value = str(raw_value).strip()
+                default_title = key[3:].replace('_', ' ').title()
+            else:
+                display_value = str(raw_value).replace('_', ' ').title()
+                default_title = key.upper()
             answer_rows.append({
                 'key': key,
-                'question': QUESTION_TITLES.get(key, key.upper()),
+                'question': QUESTION_TITLES.get(key, default_title),
                 'answer': display_value,
             })
 
@@ -1011,32 +1583,6 @@ def assessment_detail(request, pk):
         'answer_rows': answer_rows,
     }
     return render(request, 'assessment_detail.html', context)
-
-
-@login_required(login_url='login')
-@require_http_methods(['GET', 'POST'])
-def assessment_compare(request):
-    from .models import SkinAnalysis
-
-    analyses = SkinAnalysis.objects.filter(user=request.user).order_by('-created_at')
-
-    if request.method == 'POST':
-        pk1 = request.POST.get('analysis1')
-        pk2 = request.POST.get('analysis2')
-        a1 = analyses.filter(pk=pk1).first()
-        a2 = analyses.filter(pk=pk2).first()
-        if not a1 or not a2 or a1.pk == a2.pk:
-            messages.error(request, 'Please select two different assessments to compare.')
-            return render(request, 'assessment_compare.html', {'assessments': analyses})
-        skin_type_display_map = dict(SkinAnalysis._meta.get_field('identified_skin_type').choices)
-        return render(request, 'assessment_compare.html', {
-            'assessments': analyses,
-            'a1': a1,
-            'a2': a2,
-            'skin_type_display_map': skin_type_display_map,
-        })
-
-    return render(request, 'assessment_compare.html', {'assessments': analyses})
 
 
 @login_required(login_url='login')

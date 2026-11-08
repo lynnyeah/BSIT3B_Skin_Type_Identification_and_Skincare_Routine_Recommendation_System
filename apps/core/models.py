@@ -42,6 +42,7 @@ class SkinAnalysis(models.Model):
     METHODS = [
         ("questionnaire", "Questionnaire"),
         ("camera", "Camera / Photo"),
+        ("assistant", "AI Assistant"),
     ]
 
     user = models.ForeignKey(
@@ -207,6 +208,86 @@ class UserProfile(models.Model):
     def __str__(self):
         return f'{self.user.username} - Profile'
 
+
+
+class DailyCheckIn(models.Model):
+    """A user's daily skin condition check-in (condition, not skin type)."""
+
+    CONDITION_CHOICES = [
+        ('excellent', 'Excellent'),
+        ('good', 'Good'),
+        ('average', 'Average'),
+        ('rough', 'Rough'),
+        ('irritated', 'Irritated'),
+        ('breaking_out', 'Breaking Out'),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='daily_check_ins',
+    )
+    date = models.DateField(default=timezone.localdate)
+    skin_condition = models.CharField(
+        max_length=20,
+        choices=CONDITION_CHOICES,
+        default='average',
+    )
+    oiliness = models.PositiveSmallIntegerField(default=1)
+    dryness = models.PositiveSmallIntegerField(default=1)
+    acne_level = models.PositiveSmallIntegerField(default=1)
+    irritation = models.PositiveSmallIntegerField(default=1)
+    morning_completed = models.BooleanField(default=False)
+    evening_completed = models.BooleanField(default=False)
+    products_used = models.TextField(blank=True)
+    ingredients_used = models.TextField(blank=True)
+    photo = models.ImageField(
+        upload_to='skin_progress/photos/',
+        blank=True,
+        null=True,
+    )
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-date']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'date'],
+                name='unique_daily_checkin_per_day',
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.user} - {self.date} - {self.get_skin_condition_display()}'
+
+
+class IngredientExperience(models.Model):
+    """A user's personal observation about an ingredient they used."""
+
+    OUTCOME_CHOICES = [
+        ('improvement', 'Improvement noticed'),
+        ('no_change', 'No noticeable change'),
+        ('irritation', 'Irritation or unwanted reaction'),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='ingredient_experiences',
+    )
+    ingredient = models.CharField(max_length=150)
+    outcome = models.CharField(max_length=20, choices=OUTCOME_CHOICES)
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.user} - {self.ingredient} - {self.get_outcome_display()}'
 
 
 class UserPreferences(models.Model):

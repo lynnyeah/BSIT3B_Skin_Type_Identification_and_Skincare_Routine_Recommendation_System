@@ -63,3 +63,49 @@ The proposed system will have the following limitations:
 5.	The system will not include online purchasing or payment processing for skincare products.
 6.	The system will require an internet connection if it is hosted online. Access through a local computer or network will depend on the system's setup.
 
+
+
+AI SKINCARE ASSISTANT (GEMINI LIVE API)
+
+The project includes an optional AI assistant that holds a short voice or text conversation about the user's skin. It asks one question at a time, covers oiliness, dryness, flaking, shine, sensitivity, and breakouts, and then produces a structured estimate that is saved to the existing assessment history and used to refresh the user's routines.
+
+The assistant is available from the sidebar and from the dashboard card "Talk to SkinSync AI" at /assistant/.
+
+How it works
+- The Django server creates a short-lived, single-use Gemini Live token. The Gemini API key never reaches the browser.
+- Voice mode streams microphone audio directly to the Gemini Live API over a secure WebSocket and plays the spoken reply in the browser. A live transcript is shown on screen.
+- Text mode sends messages to Django, which calls the Gemini text model on the server.
+- When the conversation ends, Gemini returns a structured assessment. The result is stored in AssistantSession and copied into the existing SkinAnalysis and SkinProfile records so it appears in assessment history and recommendations.
+- Primary skin types are Oily, Dry, Normal, Combination, or Uncertain. Sensitivity is stored separately as Low, Moderate, High, or Unknown. If the answers are insufficient or conflicting, the result stays Uncertain instead of forcing a classification.
+
+Setup
+1. Install dependencies:
+   pip install -r requirements.txt
+2. Copy .env.example to .env and add your Gemini API key:
+   GEMINI_API_KEY=your-key-here
+3. Apply migrations:
+   python manage.py migrate
+4. Start the development server:
+   python manage.py runserver
+5. Sign in and open /assistant/.
+
+Configuration values in .env
+- GEMINI_API_KEY: required server-side API key.
+- GEMINI_LIVE_MODEL: Live voice model, default gemini-3.8-live.
+- GEMINI_TEXT_MODEL: text and structured-analysis model, default gemini-3.8-flash.
+- GEMINI_LIVE_VOICE: prebuilt voice name, default Aoede.
+- GEMINI_ASSISTANT_MAX_SECONDS: maximum voice session length, default 840 seconds.
+
+If the page shows that Gemini is not configured, confirm that .env exists next to manage.py, GEMINI_API_KEY is set, and the Django server was restarted after the change.
+
+Tests
+The assistant test suite uses mocked Gemini calls and does not require an API key:
+   python manage.py test apps.assistant.tests
+
+Notes and limitations
+- Voice sessions require a modern browser with microphone support and an internet connection. Use headphones to reduce echo.
+- Audio-only Live sessions have a time limit (about 15 minutes). The interface warns before the limit and offers to build a result from the conversation so far.
+- Results are AI-generated estimates, not medical diagnoses. The assistant does not detect skin disease, does not invent user details, and does not provide calibrated confidence scores.
+- Users should see a dermatologist for severe, painful, rapidly worsening, or persistent skin concerns.
+- The assistant is a supplementary feature. The existing questionnaire, recommendations, routines, and assessment history continue to work independently.
+

@@ -10,10 +10,16 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load local environment values (for example GEMINI_API_KEY) from .env.
+load_dotenv(BASE_DIR / ".env")
 
 
 # Quick-start development settings - unsuitable for production
@@ -41,6 +47,7 @@ INSTALLED_APPS = [
     'apps.core',
     'apps.users',
     'apps.info',
+    'apps.assistant',
 ]
 
 MIDDLEWARE = [
@@ -134,3 +141,39 @@ LOGOUT_REDIRECT_URL = '/'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+
+# Gemini Live/text assistant configuration.
+# The API key stays on the server. Browsers only receive short-lived tokens.
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '').strip()
+GEMINI_LIVE_MODEL = os.getenv('GEMINI_LIVE_MODEL', 'gemini-3.8-live').strip()
+GEMINI_TEXT_MODEL = os.getenv('GEMINI_TEXT_MODEL', 'gemini-3.8-flash').strip()
+# Comma-separated models tried in order when the primary text model is
+# overloaded (HTTP 503) or unavailable. Keep at least one widely available
+# model in the list. Set to an empty string to rely on built-in defaults.
+GEMINI_TEXT_FALLBACK_MODELS = os.getenv(
+    'GEMINI_TEXT_FALLBACK_MODELS', 'gemini-3.5-flash-lite,gemini-2.5-flash-lite'
+).strip()
+GEMINI_LIVE_VOICE = os.getenv('GEMINI_LIVE_VOICE', 'Aoede').strip()
+GEMINI_API_BASE = os.getenv(
+    'GEMINI_API_BASE',
+    'https://generativelanguage.googleapis.com/v1beta',
+).strip()
+GEMINI_LIVE_WS_URL = os.getenv(
+    'GEMINI_LIVE_WS_URL',
+    (
+        'wss://generativelanguage.googleapis.com/ws/'
+        'google.ai.generativelanguage.v1beta.GenerativeService.'
+        'BidiGenerateContentConstrained'
+    ),
+).strip()
+GEMINI_LIVE_LOCK_CONSTRAINTS = os.getenv(
+    'GEMINI_LIVE_LOCK_CONSTRAINTS', 'true'
+).strip().lower() in {'1', 'true', 'yes', 'on'}
+
+try:
+    GEMINI_ASSISTANT_MAX_SECONDS = int(
+        os.getenv('GEMINI_ASSISTANT_MAX_SECONDS', '840')
+    )
+except ValueError:
+    GEMINI_ASSISTANT_MAX_SECONDS = 840

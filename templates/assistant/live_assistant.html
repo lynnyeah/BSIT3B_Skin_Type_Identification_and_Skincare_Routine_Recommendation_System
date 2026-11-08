@@ -1,0 +1,273 @@
+{% extends "theme/base.html" %}
+{% load static %}
+
+{% block title %}AI Skincare Assistant{% endblock title %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/assistant.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="assistant-page">
+  <header class="assistant-header">
+    <div class="assistant-header-copy">
+      <span class="assistant-eyebrow">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> SkinSync AI
+      </span>
+      <h1 class="assistant-title">Ask SkinSync AI about your skin</h1>
+      <p class="assistant-subtitle">
+        Ask any question about your skin — oiliness, dryness, flaking, shine,
+        sensitivity, breakouts, routines, or ingredients. SkinSync AI answers
+        and can estimate your likely skin type when you ask.
+      </p>
+      <div class="assistant-disclaimer">
+        <i class="fa-solid fa-circle-info"></i>
+        <span>
+          Results are AI-generated estimates, not medical diagnoses. This assistant
+          does not detect skin diseases. See a dermatologist for serious or
+          persistent concerns.
+        </span>
+      </div>
+    </div>
+    <div class="assistant-header-badge" aria-hidden="true">
+      <i class="fa-solid fa-comment-medical"></i>
+    </div>
+  </header>
+
+  {% if not api_configured %}
+  <div class="assistant-alert assistant-alert-warning" role="alert">
+    <i class="fa-solid fa-plug-circle-exclamation"></i>
+    <div>
+      <strong>The Gemini assistant is not configured yet.</strong>
+      <p>
+        Add <code>GEMINI_API_KEY</code> to the project's <code>.env</code> file,
+        then restart the Django server. The API key is only used on the server and
+        is never sent to the browser.
+      </p>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="assistant-grid" id="setup-panel">
+    <section class="assistant-panel assistant-setup">
+      <div class="assistant-panel-head">
+        <div>
+          <h2>Start a conversation</h2>
+          <p>Choose voice for a natural spoken chat, or text if you prefer typing.</p>
+        </div>
+        <span class="assistant-chip">
+          <i class="fa-solid fa-comments"></i>
+          Ask anything
+        </span>
+      </div>
+
+      <fieldset class="assistant-modes">
+        <legend class="visually-hidden">Conversation mode</legend>
+        <label class="assistant-mode-card">
+          <input type="radio" name="assistant-mode" value="voice" checked>
+          <span class="assistant-mode-icon"><i class="fa-solid fa-microphone-lines"></i></span>
+          <span class="assistant-mode-copy">
+            <strong>Voice conversation</strong>
+            <small>
+              Speak your questions. Gemini replies out loud and the transcript appears
+              on screen. Best with headphones.
+            </small>
+          </span>
+          <span class="assistant-mode-check"><i class="fa-solid fa-circle-check"></i></span>
+        </label>
+        <label class="assistant-mode-card">
+          <input type="radio" name="assistant-mode" value="text">
+          <span class="assistant-mode-icon"><i class="fa-solid fa-keyboard"></i></span>
+          <span class="assistant-mode-copy">
+            <strong>Text conversation</strong>
+            <small>
+              Type your questions instead. You still get the same helpful answers
+              and the same structured result.
+            </small>
+          </span>
+          <span class="assistant-mode-check"><i class="fa-solid fa-circle-check"></i></span>
+        </label>
+      </fieldset>
+
+      <div class="assistant-model-note">
+        <i class="fa-solid fa-bolt"></i>
+        <span>
+          Voice model: <strong>{{ live_model }}</strong>.
+          Text and analysis model: <strong>{{ text_model }}</strong>.
+        </span>
+      </div>
+
+      <div class="assistant-start-row">
+        <button type="button" class="assistant-btn assistant-btn-primary" id="start-btn" {% if not api_configured %}disabled{% endif %}>
+          <i class="fa-solid fa-play"></i>
+          <span>Start Conversation</span>
+        </button>
+        <p class="assistant-hint">
+          <i class="fa-solid fa-lock"></i>
+          Your microphone audio goes directly to Gemini over a short-lived secure
+          session. The server keeps a transcript so your result can be saved.
+        </p>
+      </div>
+
+      <div class="assistant-alert assistant-alert-error" id="setup-error" role="alert" hidden>
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <div>
+          <strong>Something went wrong.</strong>
+          <p id="setup-error-text"></p>
+        </div>
+      </div>
+    </section>
+
+    <aside class="assistant-side">
+      <section class="assistant-panel assistant-topics">
+        <h2>What you can ask me about</h2>
+        <ul class="assistant-topic-list">
+          {% for topic in skin_topics %}
+          <li>
+            <span class="assistant-topic-number">{{ forloop.counter }}</span>
+            <span>{{ topic }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        <p class="assistant-small-print">
+          There is no need to prepare anything. Answer as honestly as you can, and
+          say "I'm not sure" when you do not know.
+        </p>
+      </section>
+
+      <section class="assistant-panel assistant-safety">
+        <h2>Before you start</h2>
+        <ul>
+          <li>Use a quiet space and allow microphone access if you choose voice.</li>
+          <li>Headphones reduce echo from the assistant's spoken replies.</li>
+          <li>Do not share prescriptions or medical records in the conversation.</li>
+          <li>Stop using any product that causes lasting irritation.</li>
+        </ul>
+      </section>
+
+      {% if recent_sessions %}
+      <section class="assistant-panel assistant-recent">
+        <div class="assistant-panel-head">
+          <h2>Recent AI assessments</h2>
+          <a href="{% url 'assessment_history' %}" class="assistant-text-link">View progress history</a>
+        </div>
+        <ul class="assistant-recent-list">
+          {% for recent in recent_sessions %}
+          <li>
+            <div>
+              <strong>{{ recent.primary_skin_type|default:"Uncertain"|title }}</strong>
+              <span class="assistant-recent-meta">
+                {{ recent.get_mode_display }} &middot; {{ recent.ended_at|default:recent.started_at|date:"M d, Y" }}
+              </span>
+            </div>
+            {% if recent.skin_analysis_id %}
+            <a href="{% url 'assessment_detail' recent.skin_analysis_id %}" aria-label="View assessment">
+              <i class="fa-solid fa-arrow-right"></i>
+            </a>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% endif %}
+    </aside>
+  </div>
+
+  <section class="assistant-panel assistant-conversation" id="conversation-panel" hidden>
+    <div class="assistant-conversation-head">
+      <div class="assistant-status" role="status" aria-live="polite">
+        <span class="assistant-status-dot" id="status-dot"></span>
+        <span id="status-text">Connecting&hellip;</span>
+      </div>
+      <div class="assistant-conversation-meta">
+        <span class="assistant-chip" id="mode-label">Voice</span>
+        <span class="assistant-chip assistant-timer" id="timer" hidden>
+          <i class="fa-regular fa-clock"></i>
+          <span id="timer-text">14:00</span>
+        </span>
+        <button type="button" class="assistant-icon-btn" id="mute-btn" hidden aria-pressed="false" title="Mute microphone">
+          <i class="fa-solid fa-microphone"></i>
+          <span class="visually-hidden">Mute microphone</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="assistant-live-band" id="live-band">
+      <div class="assistant-orb" id="assistant-orb">
+        <i class="fa-solid fa-wave-square"></i>
+      </div>
+      <div>
+        <strong id="live-caption">Preparing your conversation&hellip;</strong>
+        <p id="live-subcaption">SkinSync AI&rsquo;s answers will appear here.</p>
+      </div>
+    </div>
+
+    <div class="assistant-transcript" id="transcript" role="log" aria-live="polite" aria-label="Conversation transcript"></div>
+
+    <form class="assistant-text-form" id="text-form" hidden>
+      {% csrf_token %}
+      <label for="text-input" class="visually-hidden">Your question</label>
+      <textarea id="text-input" rows="2" maxlength="4000" placeholder="Ask a question about your skin&hellip;" autocomplete="off"></textarea>
+      <button type="submit" class="assistant-btn assistant-btn-primary" id="send-btn">
+        <i class="fa-solid fa-paper-plane"></i>
+        <span>Send</span>
+      </button>
+    </form>
+
+    <div class="assistant-typing" id="typing-indicator" hidden>
+      <span></span><span></span><span></span>
+      <em>SkinSync AI is thinking&hellip;</em>
+    </div>
+
+    <div class="assistant-alert assistant-alert-error" id="conversation-error" role="alert" hidden>
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <div>
+        <strong>Conversation problem</strong>
+        <p id="conversation-error-text"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="assistant-panel assistant-results" id="results-panel" hidden>
+    <div class="assistant-results-head">
+      <div>
+        <span class="assistant-eyebrow"><i class="fa-solid fa-wand-magic-sparkles"></i> AI guidance</span>
+        <h2>Your skincare snapshot</h2>
+        <p>Based only on what you shared in this conversation.</p>
+      </div>
+      <span class="assistant-chip assistant-chip-soft">
+        <i class="fa-solid fa-robot"></i> AI-generated estimate
+      </span>
+    </div>
+
+    <div id="results-content"></div>
+
+    <div class="assistant-results-actions">
+      <a href="#" class="assistant-btn assistant-btn-primary" id="analysis-link" hidden>
+        <i class="fa-solid fa-file-lines"></i>
+        <span>View saved assessment</span>
+      </a>
+      <a href="{% url 'routine_planner' %}" class="assistant-btn assistant-btn-soft" id="recommendations-link">
+        <i class="fa-solid fa-lightbulb"></i>
+        <span>View my routine</span>
+      </a>
+    </div>
+  </section>
+</div>
+
+<script id="assistant-config" type="application/json">
+  {
+    "sessionUrl": "{% url 'assistant:session' %}",
+    "chatUrl": "{% url 'assistant:chat' %}",
+    "abandonUrl": "{% url 'assistant:abandon' %}",
+    "apiConfigured": {{ api_configured|yesno:"true,false" }},
+    "liveModel": "{{ live_model|escapejs }}",
+    "textModel": "{{ text_model|escapejs }}",
+    "maxSeconds": {{ max_seconds|default:840 }}
+  }
+</script>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="{% static 'js/assistant-live.js' %}"></script>
+{% endblock extra_js %}

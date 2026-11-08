@@ -1,7 +1,8 @@
 {% extends "theme/base.html" %}
 {% load static %}
+{% load extra_filters %}
 
-{% block title %}Assessment History{% endblock title %}
+{% block title %}Skin Progress History{% endblock title %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/assessment_history.css' %}">
@@ -10,29 +11,69 @@
 
 {% block content %}
 <div class="ah-page">
-  <!-- Top Navigation Style Header -->
+  <!-- Page Header -->
   <div class="ah-header">
     <div style="display: flex; flex-direction: column; gap: 6px;">
-      <h1 class="ah-title">Assessment History</h1>
-      <p class="ah-subtitle">View your past skin assessments and track how your skin changes over time.</p>
+      <h1 class="ah-title">Skin Progress History</h1>
+      <p class="ah-subtitle">Record daily updates, log improvements and problems, track changes over time, compare previous and current conditions, and see whether your routine is helping.</p>
     </div>
     <div class="ah-header-actions">
-      <a href="{% url 'assessment_compare' %}" class="ah-btn ah-btn-primary">
-        <i class="fa-solid fa-sliders"></i> Compare Assessments
-      </a>
+      <button type="button" class="ah-btn ah-btn-primary" id="openCheckinBtn">
+        <i class="fa-solid fa-circle-plus"></i> Daily Check-in
+      </button>
     </div>
   </div>
 
-  <!-- Summary Cards -->
-  <div class="ah-summary-grid">
+  <!-- Range Filter -->
+  <div class="sp-range-filter">
+    <span class="sp-range-label"><i class="fa-solid fa-filter"></i> Records from:</span>
+    <a href="?range=7" class="ah-btn sp-range-btn {% if range_key == '7' %}sp-range-active{% endif %}">Last 7 days</a>
+    <a href="?range=30" class="ah-btn sp-range-btn {% if range_key == '30' %}sp-range-active{% endif %}">Last 30 days</a>
+    <a href="?range=90" class="ah-btn sp-range-btn {% if range_key == '90' %}sp-range-active{% endif %}">Last 3 months</a>
+    <a href="?range=all" class="ah-btn sp-range-btn {% if range_key == 'all' %}sp-range-active{% endif %}">All records</a>
+  </div>
+
+  <!-- Section quick-nav -->
+  <div class="sp-range-filter">
+    <span class="sp-range-label"><i class="fa-solid fa-sitemap"></i> Jump to:</span>
+    <a href="#sp-sec-1" class="ah-btn sp-range-btn">1 &middot; Record updates</a>
+    <a href="#sp-sec-2" class="ah-btn sp-range-btn">2 &middot; Improvements &amp; problems</a>
+    <a href="#sp-sec-3" class="ah-btn sp-range-btn">3 &middot; Changes over time</a>
+    <a href="#sp-sec-4" class="ah-btn sp-range-btn">4 &middot; Is my routine helping?</a>
+  </div>
+
+  <!-- Progress Summary Cards -->
+  <div class="sp-summary-grid">
     <div class="ah-summary-card">
       <div class="ah-summary-icon">
         <i class="fa-regular fa-calendar-check"></i>
       </div>
       <div class="ah-summary-content">
-        <span class="ah-summary-label">Total Assessments</span>
-        <span class="ah-summary-value">{{ total_assessments }}</span>
-        <span class="ah-summary-subtext">Since you joined.</span>
+        <span class="ah-summary-label">Total Skin Check-ins</span>
+        <span class="ah-summary-value">{{ total_checkins }}</span>
+        <span class="ah-summary-subtext">{% if checkin_streak %}{{ checkin_streak }}-day check-in streak.{% else %}All-time total.{% endif %}</span>
+      </div>
+    </div>
+
+    <div class="ah-summary-card">
+      <div class="ah-summary-icon sp-icon-sage">
+        <i class="fa-solid fa-list-check"></i>
+      </div>
+      <div class="ah-summary-content">
+        <span class="ah-summary-label">Routine Consistency</span>
+        <span class="ah-summary-value">{% if routine_consistency is not None %}{{ routine_consistency }}%{% else %}&mdash;{% endif %}</span>
+        <span class="ah-summary-subtext">Routine steps completed in the selected period.</span>
+      </div>
+    </div>
+
+    <div class="ah-summary-card">
+      <div class="ah-summary-icon sp-icon-sage">
+        <i class="fa-solid fa-fire"></i>
+      </div>
+      <div class="ah-summary-content">
+        <span class="ah-summary-label">Current Routine Streak</span>
+        <span class="ah-summary-value">{{ routine_streak }}</span>
+        <span class="ah-summary-subtext">Consecutive days with fully completed routines.</span>
       </div>
     </div>
 
@@ -41,46 +82,260 @@
         <i class="fa-regular fa-calendar"></i>
       </div>
       <div class="ah-summary-content">
-        <span class="ah-summary-label">Latest Assessment</span>
-        <span class="ah-summary-value" style="font-size: 20px;">{% if latest_analysis %}{{ latest_analysis.created_at|date:"M d, Y" }}{% else %}-{% endif %}</span>
-        <span class="ah-summary-subtext">{% if latest_skin_type_display %}{{ latest_skin_type_display }} Skin{% else %}No assessments yet{% endif %}</span>
+        <span class="ah-summary-label">Latest Skin Assessment</span>
+        <span class="ah-summary-value" style="font-size: 20px;">{% if latest_assessment %}{{ latest_assessment.created_at|date:"M d, Y" }}{% else %}-{% endif %}</span>
+        <span class="ah-summary-subtext">{% if latest_skin_type_display %}Identified as {{ latest_skin_type_display }} Skin{% else %}No assessments yet{% endif %}</span>
       </div>
     </div>
 
     <div class="ah-summary-card">
-      <div class="ah-summary-icon">
-        <i class="fa-solid fa-leaf"></i>
+      <div class="ah-summary-icon sp-icon-sage">
+        <i class="fa-solid fa-face-smile"></i>
       </div>
       <div class="ah-summary-content">
-        <span class="ah-summary-label">Most Common Skin Type</span>
-        <span class="ah-summary-value" style="font-size: 20px;">{% if most_common_skin_type_display %}{{ most_common_skin_type_display }}{% else %}-{% endif %}</span>
-        <span class="ah-summary-subtext">{% if most_common_count and total_assessments %}{{ most_common_count }} out of {{ total_assessments }} assessments.{% else %}No data available{% endif %}</span>
+        <span class="ah-summary-label">Latest Skin Condition</span>
+        <span class="ah-summary-value" style="font-size: 20px;">{% if latest_condition_display %}{{ latest_condition_display }}{% else %}-{% endif %}</span>
+        <span class="ah-summary-subtext">{% if latest_checkin %}Recorded {{ latest_checkin.date|date:"M d, Y" }}.{% else %}No check-ins yet.{% endif %}</span>
       </div>
     </div>
   </div>
 
-  <!-- Chart and Journey -->
-  <div class="ah-main-grid">
+  <!-- 1 · Daily & weekly skin condition updates -->
+  <div class="ah-section-header" id="sp-sec-1" style="scroll-margin-top: 96px;">
+    <div class="ah-section-title-group">
+      <h2>1 &middot; Daily &amp; Weekly Skin Condition Updates</h2>
+      <p>Record how your skin looks each day - oiliness, dryness, breakouts, and irritation - and keep your routine streak going.</p>
+    </div>
+  </div>
+  <div class="sp-dash-grid">
+    <!-- Calendar -->
     <div class="ah-card">
       <div class="ah-card-header">
         <div class="ah-card-title-group">
-          <div class="ah-card-icon"><i class="fa-solid fa-chart-line"></i></div>
+          <div class="ah-card-icon sp-card-icon-sage"><i class="fa-regular fa-calendar"></i></div>
           <div>
-            <h2>Skin Type Trend</h2>
-            <p>See how your skin type has changed over time.</p>
+            <h2>Daily Check-in Calendar</h2>
+            <p>Days you logged your skin condition.</p>
+          </div>
+        </div>
+        <div class="sp-calendar-nav">
+          <a class="ah-btn" href="?month={{ calendar.prev_month }}&amp;range={{ range_key }}"><i class="fa-solid fa-chevron-left"></i></a>
+          <span class="sp-month-label">{{ calendar.month_label }}</span>
+          <a class="ah-btn" href="?month={{ calendar.next_month }}&amp;range={{ range_key }}"><i class="fa-solid fa-chevron-right"></i></a>
+        </div>
+      </div>
+      <div class="ah-card-body">
+        <div class="sp-calendar">
+          <div class="sp-calendar-head">
+            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+          </div>
+          {% for week in calendar.weeks %}
+          <div class="sp-calendar-row">
+            {% for day in week %}
+              {% if day %}
+                <button type="button"
+                        class="sp-day {% if day.has_checkin %}sp-day-checkin{% endif %} {% if day.routine_done %}sp-day-routine{% endif %} {% if day.has_photo %}sp-day-photo{% endif %} {% if day.is_today %}sp-day-today{% endif %} {% if day.is_future %}sp-day-future{% endif %}"
+                        data-day="{{ day.iso }}"
+                        {% if day.is_future %}disabled{% endif %}
+                        title="{{ day.date|date:'M d, Y' }}">
+                  {{ day.number }}
+                </button>
+              {% else %}
+                <span class="sp-day sp-day-empty"></span>
+              {% endif %}
+            {% endfor %}
+          </div>
+          {% endfor %}
+        </div>
+        <div class="sp-calendar-legend">
+          <span><i class="sp-dot sp-dot-checkin"></i> Check-in</span>
+          <span><i class="sp-dot sp-dot-routine"></i> Routine completed</span>
+          <span><i class="sp-dot sp-dot-photo"></i> Photo included</span>
+        </div>
+        <p class="sp-chart-note"><i class="fa-solid fa-hand-pointer"></i> Click any date to view everything saved for that day.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Check-in records -->
+  <div class="ah-section-header">
+    <div class="ah-section-title-group">
+      <h2>Daily Skin Check-ins</h2>
+      <p>Your latest daily records. Edit or delete any of your own check-ins.</p>
+    </div>
+  </div>
+
+  {% if checkin_list %}
+  <div class="ah-history-list">
+    {% for checkin in checkin_list %}
+    <div class="ah-history-row">
+      <div class="ah-history-main">
+        <div class="ah-history-icon sp-checkin-icon">
+          <i class="fa-regular fa-pen-to-square"></i>
+        </div>
+        <div class="ah-history-info">
+          <span class="ah-history-date">{{ checkin.date|date:"F d, Y" }}</span>
+          <div class="ah-history-meta">
+            <span class="sp-badge sp-badge-{{ checkin.skin_condition }}">{{ checkin.get_skin_condition_display }}</span>
+            <span>O {{ checkin.oiliness }} &middot; D {{ checkin.dryness }} &middot; A {{ checkin.acne_level }} &middot; I {{ checkin.irritation }}</span>
+            <span>
+              <i class="fa-solid fa-sun {% if checkin.morning_completed %}sp-complete-yes{% else %}sp-complete-no{% endif %}"></i>
+              <i class="fa-solid fa-moon {% if checkin.evening_completed %}sp-complete-yes{% else %}sp-complete-no{% endif %}"></i>
+              {% if checkin.photo %}<i class="fa-solid fa-camera sp-complete-yes"></i>{% endif %}
+            </span>
+          </div>
+          {% if checkin.notes %}<div class="sp-checkin-notes">{{ checkin.notes|truncatewords:14 }}</div>{% endif %}
+        </div>
+      </div>
+      <div class="sp-checkin-actions">
+        <button type="button" class="ah-btn" data-edit-checkin="{{ checkin.date|date:'Y-m-d' }}">
+          <i class="fa-solid fa-pen"></i> Edit
+        </button>
+        <form method="post" action="{% url 'checkin_delete' %}" onsubmit="return confirm('Delete this check-in and its photo? This cannot be undone.');">
+          {% csrf_token %}
+          <input type="hidden" name="id" value="{{ checkin.pk }}">
+          <button type="submit" class="ah-btn sp-btn-danger"><i class="fa-solid fa-trash"></i> Delete</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="ah-card">
+    <div class="ah-empty-state">
+      <i class="fa-regular fa-calendar-check"></i>
+      <h3>No check-ins yet</h3>
+      <p style="margin-bottom: 16px;">Start your first daily check-in to begin monitoring your skin condition - one minute a day is all it takes.</p>
+      <button type="button" class="ah-btn ah-btn-primary" data-open-checkin>
+        <i class="fa-solid fa-circle-plus"></i> Start First Check-in
+      </button>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- 2 · Improvements & problems -->
+  <div class="ah-section-header" id="sp-sec-2" style="scroll-margin-top: 96px;">
+    <div class="ah-section-title-group">
+      <h2>2 &middot; Improvements &amp; Problems</h2>
+      <p>Record what improved and what went wrong - in your daily check-in notes, and per ingredient below.</p>
+    </div>
+  </div>
+
+  <div class="sp-dash-grid">
+    <div class="ah-card">
+      <div class="ah-card-header">
+        <div class="ah-card-title-group">
+          <div class="ah-card-icon sp-card-icon-sage"><i class="fa-solid fa-flask"></i></div>
+          <div>
+            <h2>Record an Experience</h2>
+            <p>Personal observations only - not scientific proof of results.</p>
           </div>
         </div>
       </div>
       <div class="ah-card-body">
-        {% if chart_data|length > 0 %}
-        <div class="ah-chart-container">
-          <canvas id="skinTrendChart"></canvas>
+        <form method="post" action="{% url 'ingredient_experience_save' %}" class="sp-ingredient-form">
+          {% csrf_token %}
+          <div class="sp-form-row">
+            <label for="ingredientSelect">Ingredient</label>
+            <select id="ingredientSelect" name="ingredient" class="ah-search sp-select">
+              <option value="">Choose from your recommendations...</option>
+              {% for ingredient in recommended_ingredients %}
+              <option value="{{ ingredient }}">{{ ingredient }}</option>
+              {% endfor %}
+              <option value="__other__">Other (type it below)</option>
+            </select>
+          </div>
+          <div class="sp-form-row" id="ingredientOtherWrap" style="display:none;">
+            <label for="ingredientOther">Other ingredient</label>
+            <input type="text" id="ingredientOther" name="ingredient_other" class="ah-search" maxlength="150" placeholder="e.g. Rosehip Oil">
+          </div>
+          <div class="sp-form-row">
+            <label>What did you notice?</label>
+            <div class="sp-outcome-group">
+              <label class="sp-outcome-option"><input type="radio" name="outcome" value="improvement" required> <i class="fa-solid fa-arrow-trend-up"></i> Improvement noticed</label>
+              <label class="sp-outcome-option"><input type="radio" name="outcome" value="no_change"> <i class="fa-solid fa-equals"></i> No noticeable change</label>
+              <label class="sp-outcome-option"><input type="radio" name="outcome" value="irritation"> <i class="fa-solid fa-triangle-exclamation"></i> Irritation or unwanted reaction</label>
+            </div>
+          </div>
+          <div class="sp-form-row">
+            <label for="experienceComment">Comments (optional)</label>
+            <textarea id="experienceComment" name="comment" class="ah-search sp-textarea" rows="2" maxlength="1000" placeholder="How did your skin react? When did you apply it?"></textarea>
+          </div>
+          <button type="submit" class="ah-btn ah-btn-primary"><i class="fa-solid fa-check"></i> Save Experience</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="ah-card">
+      <div class="ah-card-header">
+        <div class="ah-card-title-group">
+          <div class="ah-card-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+          <div>
+            <h2>Ingredient Usage History</h2>
+            <p>What you have tried and what you noticed.</p>
+          </div>
+        </div>
+      </div>
+      <div class="ah-card-body">
+        {% if ingredient_experiences %}
+        <div class="sp-experience-list">
+          {% for exp in ingredient_experiences %}
+          <div class="sp-experience-row">
+            <div class="sp-experience-icon sp-experience-{{ exp.outcome }}">
+              {% if exp.outcome == 'improvement' %}<i class="fa-solid fa-arrow-trend-up"></i>
+              {% elif exp.outcome == 'irritation' %}<i class="fa-solid fa-triangle-exclamation"></i>
+              {% else %}<i class="fa-solid fa-equals"></i>{% endif %}
+            </div>
+            <div class="sp-experience-info">
+              <span class="sp-experience-name">{{ exp.ingredient }}</span>
+              <span class="sp-experience-outcome">{{ exp.get_outcome_display }} &middot; {{ exp.created_at|date:"M d, Y" }}</span>
+              {% if exp.comment %}<span class="sp-experience-comment">{{ exp.comment|truncatewords:20 }}</span>{% endif %}
+            </div>
+          </div>
+          {% endfor %}
         </div>
         {% else %}
         <div class="ah-empty-state">
+          <i class="fa-solid fa-flask"></i>
+          <h3>No experiences recorded yet</h3>
+          <p>After using a recommended ingredient for a few days, record what your skin felt.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 · Track changes over time -->
+  <div class="ah-section-header" id="sp-sec-3" style="scroll-margin-top: 96px;">
+    <div class="ah-section-title-group">
+      <h2>3 &middot; Skin Concern Changes Over Time</h2>
+      <p>Track how your concerns - oiliness, dryness, breakouts, and sensitivity - shift week to week.</p>
+    </div>
+  </div>
+
+  <div class="ah-main-grid">
+    <div class="ah-card">
+      <div class="ah-card-header">
+        <div class="ah-card-title-group">
+          <div class="ah-card-icon sp-card-icon-sage"><i class="fa-solid fa-chart-line"></i></div>
+          <div>
+            <h2>Skin Condition Changes</h2>
+            <p>Your daily ratings for oiliness, dryness, acne, and sensitivity.</p>
+          </div>
+        </div>
+      </div>
+      <div class="ah-card-body">
+        {% if chart_labels %}
+        <div class="ah-chart-container sp-chart-tall">
+          <canvas id="conditionChart"></canvas>
+        </div>
+        <p class="sp-chart-note"><i class="fa-solid fa-circle-info"></i> Ratings are 1 (none / very low) to 5 (severe), taken from your real check-in records.</p>
+        {% else %}
+        <div class="ah-empty-state">
           <i class="fa-solid fa-chart-line"></i>
-          <h3>No trend data yet</h3>
-          <p>Complete your first skin analysis to see your skin type trend over time.</p>
+          <h3>No check-in data yet</h3>
+          <p>Record your first daily check-in to see how your skin condition changes over time.</p>
+          <button type="button" class="ah-btn ah-btn-primary" data-open-checkin><i class="fa-solid fa-circle-plus"></i> Start First Check-in</button>
         </div>
         {% endif %}
       </div>
@@ -92,7 +347,7 @@
           <div class="ah-card-icon"><i class="fa-solid fa-route"></i></div>
           <div>
             <h2>Your Skin Type Journey</h2>
-            <p>Insights from your assessment history</p>
+            <p>Insights from your formal assessments</p>
           </div>
         </div>
       </div>
@@ -106,140 +361,415 @@
             <span>Good to Know</span>
           </div>
           <p class="ah-tip-text">
-            Skin conditions can change over time due to factors such as skincare habits, environment, stress, hormones, and other influences. This assessment is for informational purposes only and is not a medical diagnosis.
+            Your <strong>skin type</strong> (Oily, Dry, Normal, Combination, Sensitive) only changes through the skin analysis or reassessment process. Daily check-ins track your <strong>skin condition</strong> - oiliness, dryness, breakouts, and irritation - which can change from day to day.
           </p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Assessment History List -->
-  <div class="ah-section-header">
-    <div class="ah-section-title-group">
-      <h2>Your Assessment History</h2>
-      <p>View the details of each assessment and your personalized results.</p>
-    </div>
-  </div>
-
-  {% if assessments %}
-  <div class="ah-history-list">
-    {% for assessment in assessments %}
-    <div class="ah-history-row">
-      <div class="ah-history-main">
-        <div class="ah-history-icon">
-          <i class="fa-regular fa-calendar"></i>
+  <div class="ah-card">
+    <div class="ah-card-header">
+      <div class="ah-card-title-group">
+        <div class="ah-card-icon"><i class="fa-solid fa-timeline"></i></div>
+        <div>
+          <h2>Skin Progress Timeline</h2>
+          <p>Assessments, check-ins, and reported changes in order.</p>
         </div>
-        <div class="ah-history-info">
-          <span class="ah-history-date">{{ assessment.created_at|date:"F d, Y" }}</span>
-          <div class="ah-history-meta">
-            <span>{{ assessment.created_at|date:"g:i A" }}</span>
-            <span>•</span>
-            <span class="ah-skin-badge">{{ assessment.get_identified_skin_type_display }} Skin</span>
+      </div>
+    </div>
+    <div class="ah-card-body">
+      {% if timeline %}
+      <div class="sp-timeline">
+        {% for event in timeline|slice:":30" %}
+        <div class="sp-timeline-item">
+          <div class="sp-timeline-dot {% if event.kind == 'assessment' %}sp-timeline-dot-assessment{% else %}sp-timeline-dot-checkin{% endif %}">
+            <i class="{% if event.kind == 'assessment' %}fa-solid fa-wand-magic-sparkles{% else %}fa-regular fa-pen-to-square{% endif %}"></i>
+          </div>
+          <div class="sp-timeline-content">
+            <div class="sp-timeline-date">{{ event.date|date:"M d, Y" }}</div>
+            {% if event.kind == 'assessment' %}
+              <div class="sp-timeline-body">
+                <span class="ah-skin-badge">{{ event.analysis.get_identified_skin_type_display }} Skin</span>
+                <span class="sp-timeline-meta">{{ event.analysis.get_method_display }} &middot; {{ event.datetime|date:"g:i A" }}</span>
+              </div>
+              {% if event.analysis.notes %}
+              <div class="sp-timeline-detail">{{ event.analysis.notes|truncatewords:18 }}</div>
+              {% endif %}
+              <a class="sp-timeline-link" href="{% url 'assessment_detail' event.analysis.pk %}">View assessment details <i class="fa-solid fa-arrow-right"></i></a>
+            {% else %}
+              <div class="sp-timeline-body">
+                <span class="sp-badge sp-badge-{{ event.checkin.skin_condition }}">{{ event.checkin.get_skin_condition_display }}</span>
+                <span class="sp-timeline-meta">O {{ event.checkin.oiliness }} &middot; D {{ event.checkin.dryness }} &middot; A {{ event.checkin.acne_level }} &middot; I {{ event.checkin.irritation }}</span>
+                <span class="sp-timeline-meta">
+                  <i class="fa-solid fa-sun {% if event.checkin.morning_completed %}sp-complete-yes{% else %}sp-complete-no{% endif %}"></i> AM:
+                  {% if event.checkin.morning_completed %}done{% else %}-{% endif %}
+                  &nbsp;
+                  <i class="fa-solid fa-moon {% if event.checkin.evening_completed %}sp-complete-yes{% else %}sp-complete-no{% endif %}"></i> PM:
+                  {% if event.checkin.evening_completed %}done{% else %}-{% endif %}
+                </span>
+                {% if event.checkin.photo %}<span class="sp-timeline-meta"><i class="fa-solid fa-camera sp-complete-yes"></i> photo recorded</span>{% endif %}
+              </div>
+              {% if event.checkin.notes %}
+              <div class="sp-timeline-detail">{{ event.checkin.notes|truncatewords:18 }}</div>
+              {% endif %}
+            {% endif %}
           </div>
         </div>
+        {% endfor %}
       </div>
-      <div class="ah-history-concerns">
-        {% if assessment.notes %}
-          {{ assessment.notes|truncatewords:15 }}
-        {% elif assessment.answers %}
-          Based on your questionnaire responses
+      {% else %}
+      <div class="ah-empty-state">
+        <i class="fa-solid fa-timeline"></i>
+        <h3>Your timeline is empty</h3>
+        <p>Formal assessments and daily check-ins will appear here as milestones of your skin journey.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 4 · Is my routine helping -->
+  <div class="ah-section-header" id="sp-sec-4" style="scroll-margin-top: 96px;">
+    <div class="ah-section-title-group">
+      <h2>4 &middot; Is My Routine Helping?</h2>
+      <p>Based on your check-in scores and routine consistency, see whether your skincare routine appears to be helping.</p>
+    </div>
+  </div>
+
+  <div class="ah-btn-group mb-3" style="display: block;">
+    <div class="ah-summary-card" style="max-width: 100%;">
+      <div class="ah-summary-icon sp-icon-sage">
+        <i class="fa-solid fa-stethoscope"></i>
+      </div>
+      <div class="ah-summary-content">
+        <span class="ah-summary-label">Is my routine helping?</span>
+        {% if routine_helping %}
+          {% if routine_helping.trend == 'improving' %}
+            <span class="ah-summary-value" style="font-size: 18px;">Yes - looking better</span>
+            <span class="ah-summary-subtext">Your recent check-ins average {{ routine_helping.later }}/5 versus {{ routine_helping.earlier }}/5 earlier. Keep going with your routine.</span>
+          {% elif routine_helping.trend == 'declining' %}
+            <span class="ah-summary-value" style="font-size: 18px;">Not yet - trending worse</span>
+            <span class="ah-summary-subtext">Recent check-ins average {{ routine_helping.later }}/5 versus {{ routine_helping.earlier }}/5 earlier. Review your routine notes and ingredient experiences, and see the AI Assistant for guidance.</span>
+          {% else %}
+            <span class="ah-summary-value" style="font-size: 18px;">Steady so far</span>
+            <span class="ah-summary-subtext">Your condition is stable (about {{ routine_helping.later }}/5). Give the routine a few more weeks, and record check-ins regularly.</span>
+          {% endif %}
         {% else %}
-          Assessment completed
+          <span class="ah-summary-value" style="font-size: 18px;">Not enough data</span>
+          <span class="ah-summary-subtext">Record daily check-ins for a few days to see whether your routine appears to be helping.</span>
+        {% endif %}
+        {% if routine_helping and routine_helping.consistency is not None %}
+        <span class="ah-summary-subtext">Routine consistency in the selected period: {{ routine_helping.consistency }}%.</span>
         {% endif %}
       </div>
-      <a href="{% url 'assessment_detail' assessment.pk %}" class="ah-btn">
-        <i class="fa-solid fa-eye"></i> View Details
-      </a>
-    </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <div class="ah-card">
-    <div class="ah-empty-state">
-      <i class="fa-solid fa-clipboard-list"></i>
-      <h3>No assessments yet</h3>
-      <p style="margin-bottom: 16px;">Start your first skin analysis to build your assessment history.</p>
-      <a href="{% url 'skin_analysis' %}" class="ah-btn ah-btn-primary">
-        <i class="fa-solid fa-magnifying-glass"></i> Start Skin Analysis
-      </a>
     </div>
   </div>
-  {% endif %}
 </div>
 
-{% if chart_data|length > 0 %}
+<!-- Daily Check-in Modal -->
+<div class="modal fade" id="checkinModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content sp-modal">
+      <div class="modal-header sp-modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-circle-plus"></i> <span id="checkinModalTitle">Daily Skin Check-in</span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" action="{% url 'checkin_save' %}" enctype="multipart/form-data" id="checkinForm">
+        {% csrf_token %}
+        <div class="modal-body sp-modal-body">
+          <div class="sp-form-inline-row">
+            <div class="sp-form-row sp-grow">
+              <label for="checkinDateInput">Date recorded</label>
+              <input type="date" id="checkinDateInput" name="date" class="ah-search" value="{{ form_defaults.date }}" max="{% now 'Y-m-d' %}" required>
+            </div>
+            <div class="sp-form-row sp-grow">
+              <label for="skinConditionSelect">Current skin condition</label>
+              <select id="skinConditionSelect" name="skin_condition" class="ah-search" required>
+                {% for condition in condition_choices %}
+                <option value="{{ condition.0 }}" {% if condition.0 == form_defaults.skin_condition %}selected{% endif %}>{{ condition.1 }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="sp-rating-block">
+            <label>Oiliness level</label>
+            <div class="sp-rating-scale">
+              {% for val in "12345"|make_list %}
+              <label class="sp-rating-option">
+                <input type="radio" name="oiliness" value="{{ val }}" {% if val == form_defaults.oiliness|stringformat:'s' %}checked{% endif %}>
+                <span>{{ val }}</span><small>{{ rating_labels|get_item:val }}</small>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="sp-rating-block">
+            <label>Dryness level</label>
+            <div class="sp-rating-scale">
+              {% for val in "12345"|make_list %}
+              <label class="sp-rating-option">
+                <input type="radio" name="dryness" value="{{ val }}" {% if val == form_defaults.dryness|stringformat:'s' %}checked{% endif %}>
+                <span>{{ val }}</span><small>{{ rating_labels|get_item:val }}</small>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="sp-rating-block">
+            <label>Acne / breakout level</label>
+            <div class="sp-rating-scale">
+              {% for val in "12345"|make_list %}
+              <label class="sp-rating-option">
+                <input type="radio" name="acne_level" value="{{ val }}" {% if val == form_defaults.acne_level|stringformat:'s' %}checked{% endif %}>
+                <span>{{ val }}</span><small>{{ rating_labels|get_item:val }}</small>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="sp-rating-block">
+            <label>Irritation / sensitivity level</label>
+            <div class="sp-rating-scale">
+              {% for val in "12345"|make_list %}
+              <label class="sp-rating-option">
+                <input type="radio" name="irritation" value="{{ val }}" {% if val == form_defaults.irritation|stringformat:'s' %}checked{% endif %}>
+                <span>{{ val }}</span><small>{{ rating_labels|get_item:val }}</small>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+          <p class="sp-chart-note"><i class="fa-solid fa-circle-info"></i> 1 = none / very low, 2 = mild, 3 = moderate, 4 = noticeable, 5 = severe / very high.</p>
+
+          <div class="sp-form-inline-row">
+            <div class="sp-form-row sp-grow">
+              <label class="sp-check-line"><input type="checkbox" name="morning_completed" id="morningCheck"> Morning routine completed?</label>
+            </div>
+            <div class="sp-form-row sp-grow">
+              <label class="sp-check-line"><input type="checkbox" name="evening_completed" id="eveningCheck"> Evening routine completed?</label>
+            </div>
+          </div>
+
+          <div class="sp-form-inline-row">
+            <div class="sp-form-row sp-grow">
+              <label for="productsUsed">Products used</label>
+              <textarea id="productsUsed" name="products_used" class="ah-search sp-textarea" rows="2" placeholder="e.g. Gentle Hydrating Cleanser, Vitamin C Serum"></textarea>
+            </div>
+            <div class="sp-form-row sp-grow">
+              <label for="ingredientsUsed">Ingredients used</label>
+              <textarea id="ingredientsUsed" name="ingredients_used" class="ah-search sp-textarea" rows="2" placeholder="e.g. Niacinamide, Ceramides"></textarea>
+            </div>
+          </div>
+
+          <div class="sp-form-inline-row">
+            <div class="sp-form-row sp-grow">
+              <label for="photoInput">Skin progress photo (optional)</label>
+              <input type="file" id="photoInput" name="photo" accept=".jpg,.jpeg,.png,.webp" class="ah-search sp-file">
+              <small class="sp-chart-note">JPG, PNG, or WEBP up to 5MB. Only you can see it.</small>
+            </div>
+            <div class="sp-form-row sp-grow">
+              <label for="notesInput">Additional notes / skin changes</label>
+              <textarea id="notesInput" name="notes" class="ah-search sp-textarea" rows="2" placeholder="Anything different about your skin today?"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer sp-modal-footer">
+          <button type="button" class="ah-btn" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="ah-btn ah-btn-primary"><i class="fa-solid fa-check"></i> Save Check-in</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Day Details Modal -->
+<div class="modal fade" id="dayModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content sp-modal">
+      <div class="modal-header sp-modal-header">
+        <h5 class="modal-title"><i class="fa-regular fa-calendar"></i> <span id="dayModalDate">Day details</span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="dayModalBody">
+        <p class="sp-chart-note"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_js %}
 <script>
-  const ctx = document.getElementById('skinTrendChart').getContext('2d');
-  const chartData = {{ chart_data|safe }};
-  
-  const skinTypeOrder = { 'dry': 0, 'sensitive': 1, 'normal': 2, 'combination': 3, 'oily': 4 };
-  const skinTypeLabels = { 'dry': 'Dry', 'sensitive': 'Sensitive', 'normal': 'Normal', 'combination': 'Combination', 'oily': 'Oily' };
-  
-  const labels = chartData.map(d => {
-    const date = new Date(d.date);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  });
-  
-  const dataPoints = chartData.map(d => skinTypeOrder[d.skin_type] !== undefined ? skinTypeOrder[d.skin_type] : 2);
-  
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Skin Type',
-        data: dataPoints,
-        borderColor: '#7a5842',
-        backgroundColor: '#7a5842',
-        tension: 0.3,
-        pointRadius: 5,
-        pointBackgroundColor: '#7a5842',
-        pointBorderColor: '#ffffff',
-        pointBorderWidth: 2,
-        borderWidth: 2,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: false
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              const idx = context.dataIndex;
-              return 'Skin Type: ' + (chartData[idx] ? chartData[idx].skin_type_display : '');
-            }
-          }
-        }
+  /* 1 = none, ... 5 = severe (kept in sync with the server-side descriptions) */
+  const ratingDescriptions = { 1: 'None / Very low', 2: 'Mild', 3: 'Moderate', 4: 'Noticeable', 5: 'Severe' };
+
+  function esc(value) {
+    const div = document.createElement('div');
+    div.textContent = value == null ? '' : String(value);
+    return div.innerHTML;
+  }
+
+  function setValue(id, value) {
+    const el = document.getElementById(id);
+    if (el) { el.value = value || ''; }
+  }
+
+  function setRating(name, value) {
+    document.querySelectorAll('input[name="' + name + '"]').forEach(radio => {
+      radio.checked = String(radio.value) === String(value);
+    });
+  }
+
+  /* ---------- Condition chart (real check-in data) ---------- */
+  const conditionLabels = {{ chart_labels|safe }};
+  const conditionSeries = {{ chart_series|safe }};
+  const conditionCtx = document.getElementById('conditionChart');
+  if (conditionCtx && conditionLabels.length && typeof Chart !== 'undefined') {
+    const gridColor = '#e6dfd3';
+    const tickColor = '#7a6a5d';
+    new Chart(conditionCtx, {
+      type: 'line',
+      data: {
+        labels: conditionLabels,
+        datasets: [
+          { label: 'Oiliness', data: conditionSeries.oiliness, borderColor: '#d98e5a', backgroundColor: 'rgba(217,142,90,.12)', tension: .35, borderWidth: 2, pointRadius: 3, spanGaps: true },
+          { label: 'Dryness', data: conditionSeries.dryness, borderColor: '#7a5842', backgroundColor: 'rgba(122,88,66,.12)', tension: .35, borderWidth: 2, pointRadius: 3, spanGaps: true },
+          { label: 'Acne', data: conditionSeries.acne_level, borderColor: '#e08080', backgroundColor: 'rgba(224,128,128,.12)', tension: .35, borderWidth: 2, pointRadius: 3, spanGaps: true },
+          { label: 'Irritation', data: conditionSeries.irritation, borderColor: '#7d9b76', backgroundColor: 'rgba(125,155,118,.12)', tension: .35, borderWidth: 2, pointRadius: 3, spanGaps: true }
+        ]
       },
-      scales: {
-        y: {
-          ticks: {
-            stepSize: 1,
-            callback: function(value) {
-              const map = ['Dry', 'Sensitive', 'Normal', 'Combination', 'Oily'];
-              return map[value] || '';
-            },
-            color: '#7a6a5d'
-          },
-          grid: {
-            color: '#e6dfd3'
-          }
-        },
-        x: {
-          ticks: {
-            color: '#7a6a5d'
-          },
-          grid: {
-            color: '#e6dfd3'
-          }
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { labels: { color: tickColor, boxWidth: 14 } } },
+        scales: {
+          y: { min: 1, max: 5, ticks: { stepSize: 1, color: tickColor }, grid: { color: gridColor } },
+          x: { ticks: { color: tickColor, maxTicksLimit: 14 }, grid: { color: gridColor } }
         }
       }
-    }
+    });
+  }
+
+  /* ---------- Check-in modal ---------- */
+  const checkinModalEl = document.getElementById('checkinModal');
+  const checkinModal = window.bootstrap ? new bootstrap.Modal(checkinModalEl) : null;
+
+  document.getElementById('openCheckinBtn').addEventListener('click', () => { if (checkinModal) checkinModal.show(); });
+  document.querySelectorAll('[data-open-checkin]').forEach(btn => btn.addEventListener('click', () => { if (checkinModal) checkinModal.show(); }));
+
+  function fillCheckinModal(checkin) {
+    document.getElementById('checkinModalTitle').textContent = 'Edit Daily Check-in';
+    setValue('checkinDateInput', checkin.date);
+    const conditionSelect = document.getElementById('skinConditionSelect');
+    if (conditionSelect) { conditionSelect.value = checkin.skin_condition_value || ''; }
+    setRating('oiliness', checkin.oiliness);
+    setRating('dryness', checkin.dryness);
+    setRating('acne_level', checkin.acne_level);
+    setRating('irritation', checkin.irritation);
+    document.getElementById('morningCheck').checked = checkin.morning_completed;
+    document.getElementById('eveningCheck').checked = checkin.evening_completed;
+    setValue('productsUsed', checkin.products_used);
+    setValue('ingredientsUsed', checkin.ingredients_used);
+    setValue('notesInput', checkin.notes);
+  }
+
+  function openDayDetails(day) {
+    fetch('{% url 'checkin_day_details' %}?date=' + encodeURIComponent(day))
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('dayModalDate').textContent = data.display_date || day;
+        const body = document.getElementById('dayModalBody');
+        let html = '';
+        if (data.assessment) {
+          const a = data.assessment;
+          html += '<div class="sp-day-section"><h6><i class="fa-solid fa-wand-magic-sparkles sp-complete-yes"></i> Formal Skin Assessment</h6>';
+          html += '<p><strong>' + a.skin_type + ' Skin</strong> &middot; ' + a.method + ' &middot; ' + a.created_at + '</p></div>';
+        }
+        if (data.checkin) {
+          const c = data.checkin;
+          html += '<div class="sp-day-section"><h6><i class="fa-regular fa-pen-to-square"></i> Daily Check-in</h6>';
+          html += '<p>Condition: <strong>' + c.skin_condition + '</strong></p><ul>';
+          html += '<li>Oiliness: ' + c.oiliness + ' - ' + ratingDescriptions[c.oiliness] + '</li>';
+          html += '<li>Dryness: ' + c.dryness + ' - ' + ratingDescriptions[c.dryness] + '</li>';
+          html += '<li>Acne / breakout: ' + c.acne_level + ' - ' + ratingDescriptions[c.acne_level] + '</li>';
+          html += '<li>Irritation / sensitivity: ' + c.irritation + ' - ' + ratingDescriptions[c.irritation] + '</li></ul>';
+          html += '<p><i class="fa-solid fa-sun"></i> Morning routine: ' + (c.morning_completed ? 'Completed' : 'Not completed') + '<br><i class="fa-solid fa-moon"></i> Evening routine: ' + (c.evening_completed ? 'Completed' : 'Not completed') + '</p>';
+          if (c.products_used) { html += '<p><strong>Products used:</strong> ' + esc(c.products_used) + '</p>'; }
+          if (c.ingredients_used) { html += '<p><strong>Ingredients used:</strong> ' + esc(c.ingredients_used) + '</p>'; }
+          if (c.notes) { html += '<p><strong>Notes:</strong> ' + esc(c.notes) + '</p>'; }
+          if (c.photo) { html += '<img class="sp-day-photo-img" src="' + c.photo + '" alt="Progress photo" style="max-width:100%;border-radius:12px;">'; }
+          html += '<p><a href="#" data-edit-link="' + c.date + '">Edit this check-in</a></p></div>';
+        }
+        if (data.experiences && data.experiences.length) {
+          html += '<div class="sp-day-section"><h6><i class="fa-solid fa-flask"></i> Ingredient Experiences</h6><ul>';
+          data.experiences.forEach(item => {
+            html += '<li><strong>' + esc(item.ingredient) + '</strong> - ' + item.outcome + (item.comment ? ' (' + esc(item.comment) + ')' : '') + '</li>';
+          });
+          html += '</ul></div>';
+        }
+        if (!html) { html = '<p class="sp-chart-note">No records for this day yet.</p>'; }
+        body.innerHTML = html;
+        if (dayModal) dayModal.show();
+      })
+      .catch(() => {
+        const body = document.getElementById('dayModalBody');
+        document.getElementById('dayModalDate').textContent = day;
+        body.innerHTML = '<p class="sp-chart-note">Could not load records for this day.</p>';
+        if (dayModal) dayModal.show();
+      });
+  }
+
+  document.querySelectorAll('[data-edit-checkin]').forEach(btn => btn.addEventListener('click', function () {
+    const day = this.getAttribute('data-edit-checkin');
+    fetch('{% url 'checkin_day_details' %}?date=' + encodeURIComponent(day))
+      .then(r => r.json())
+      .then(data => {
+        if (!data.success || !data.checkin) { alert('Could not load that check-in.'); return; }
+        fillCheckinModal(data.checkin);
+        if (checkinModal) checkinModal.show();
+      })
+      .catch(() => alert('Could not load that check-in.'));
+  }));
+
+  /* ---------- Calendar day clicks ---------- */
+  const dayModalEl = document.getElementById('dayModal');
+  const dayModal = window.bootstrap ? new bootstrap.Modal(dayModalEl) : null;
+  document.querySelectorAll('.sp-day[data-day]:not(.sp-day-future)').forEach(cell => {
+    cell.addEventListener('click', () => openDayDetails(cell.getAttribute('data-day')));
   });
+  dayModalEl.addEventListener('click', function (event) {
+    const link = event.target.closest('[data-edit-link]');
+    if (!link) { return; }
+    event.preventDefault();
+    dayModal && dayModal.hide();
+    fetch('{% url 'checkin_day_details' %}?date=' + encodeURIComponent(link.getAttribute('data-edit-link')))
+      .then(r => r.json())
+      .then(data => {
+        if (!data.success || !data.checkin) { alert('Could not load that check-in.'); return; }
+        fillCheckinModal(data.checkin);
+        if (checkinModal) checkinModal.show();
+      })
+      .catch(() => alert('Could not load that check-in.'));
+  });
+
+  /* ---------- Ingredient form ---------- */
+  const ingredientSelect = document.getElementById('ingredientSelect');
+  const ingredientOtherWrap = document.getElementById('ingredientOtherWrap');
+  const ingredientOtherInput = document.getElementById('ingredientOther');
+  if (ingredientSelect) {
+    ingredientSelect.addEventListener('change', () => {
+      const isOther = ingredientSelect.value === '__other__';
+      ingredientOtherWrap.style.display = isOther ? 'flex' : 'none';
+      if (isOther) {
+        ingredientSelect.removeAttribute('name');
+        ingredientOtherInput.required = true;
+      } else {
+        ingredientOtherInput.required = false;
+      }
+    });
+  }
+
 </script>
-{% endif %}
-{% endblock content %}
+{% endblock extra_js %}

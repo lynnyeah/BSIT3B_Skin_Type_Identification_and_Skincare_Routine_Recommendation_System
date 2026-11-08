@@ -1,7 +1,7 @@
 {% extends "theme/base.html" %}
 {% load static %}
 
-{% block title %}Routine Planner{% endblock title %}
+{% block title %}My Routine{% endblock title %}
 
 {% block extra_css %}
 <style>
@@ -193,8 +193,11 @@
 <div class="routine-page" id="routine-page" data-date="{{ selected_date|date:'Y-m-d' }}">
   <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
     <div>
-      <h2 class="page-title mb-1">Routine Planner</h2>
-      <div class="text-muted">Track your morning and evening skincare steps, monitor consistency, and build healthy skin habits.</div>
+      <h2 class="page-title mb-1">My Routine</h2>
+      <div class="text-muted">
+        <span class="step-tag me-1">{{ skin_type_display }} skin</span>
+        Track your morning and evening skincare steps, monitor consistency, and build healthy skin habits.
+      </div>
     </div>
     <span class="badge-progress">{{ overall_completed }}/{{ overall_total }} steps today · {{ overall_percent }}%</span>
   </div>
@@ -359,6 +362,45 @@
                 <div class="small" style="color: var(--routine-brown);">No product notes yet. Add products to your routine to see tips here.</div>
               </div>
             </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="card routine-card mb-3">
+        <div class="card-header">
+          <h5 class="mb-0" style="font-weight: 700;">Why These Ingredients</h5>
+        </div>
+        <div class="card-body">
+          {% for item in ingredient_details %}
+            <div class="note-box {% if not forloop.last %}mb-2{% endif %}">
+              <div class="d-flex align-items-start gap-2">
+                <i class="fa-solid fa-flask" style="color: var(--routine-accent-strong); margin-top: 0.2rem;"></i>
+                <div class="small" style="color: var(--routine-brown);">
+                  <strong>{{ item.name }}</strong>
+                  <div class="text-muted">{{ item.purpose }}</div>
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="note-box">
+              <div class="small" style="color: var(--routine-brown);">
+                Take the skin analysis to generate a routine and see which ingredients suit you.
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="card routine-card mb-3">
+        <div class="card-header">
+          <h5 class="mb-0" style="font-weight: 700;">Personalized Tips</h5>
+        </div>
+        <div class="card-body">
+          {% for tip in routine_tips %}
+            <div class="text-muted small mb-2"><i class="fa-solid fa-circle-check me-1" style="color: var(--routine-accent-strong);"></i>{{ tip }}</div>
+          {% endfor %}
+          {% for note in important_notes %}
+            <div class="text-muted small mb-2"><i class="fa-solid fa-triangle-exclamation me-1" style="color: var(--routine-accent-strong);"></i>{{ note }}</div>
           {% endfor %}
         </div>
       </div>

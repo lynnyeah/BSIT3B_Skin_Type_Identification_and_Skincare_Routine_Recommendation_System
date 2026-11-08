@@ -9,6 +9,8 @@ from .models import (
     SkincareRoutine,
     RoutineStep,
     RoutineProgress,
+    DailyCheckIn,
+    IngredientExperience,
 )
 
 
@@ -18,3 +20,6 @@ admin.site.register(SkincareProduct)
 admin.site.register(SkincareRoutine)
 admin.site.register(RoutineStep)
 admin.site.register(RoutineProgress)
+admin.site.register(DailyCheckIn)
+admin.site.register(IngredientExperience)
+

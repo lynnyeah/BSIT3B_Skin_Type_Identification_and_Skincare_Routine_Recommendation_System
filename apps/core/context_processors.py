@@ -19,7 +19,8 @@ def header_context(request):
                 "title": "Skin analysis ready",
                 "message": (
                     f"Your latest result is "
-                    f"{latest_analysis.get_identified_skin_type_display()}."
+                    f"{latest_analysis.get_identified_skin_type_display()} "
+                    f"- view it in Skin Progress History."
                 ),
                 "url": reverse("assessment_history"),
                 "icon": "fa-solid fa-wand-magic-sparkles",

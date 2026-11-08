@@ -246,7 +246,7 @@
 
       <!-- 3. Three Quick Action Cards -->
       <div class="row g-3 mb-4">
-        <div class="col-md-6">
+        <div class="col-md-6 col-xl-4">
           <div class="action-card">
             <div class="action-icon">🔍</div>
             <h5 class="text-brown fw-bold mb-1" style="font-size: 0.95rem;">Start Skin Analysis</h5>
@@ -254,12 +254,20 @@
             <a href="{% url 'skin_analysis' %}" class="btn-warm-action">Begin Analysis →</a>
           </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-6 col-xl-4">
           <div class="action-card">
             <div class="action-icon">📅</div>
             <h5 class="text-brown fw-bold mb-1" style="font-size: 0.95rem;">View My Routine</h5>
             <p class="text-muted-brown mb-0" style="font-size: 0.78rem;">Follow your personalized skincare routine and track your progress.</p>
             <a href="{% url 'routine_planner' %}" class="btn-warm-action">Go to Routine →</a>
+          </div>
+        </div>
+        <div class="col-md-6 col-xl-4">
+          <div class="action-card">
+            <div class="action-icon">🎙️</div>
+            <h5 class="text-brown fw-bold mb-1" style="font-size: 0.95rem;">Talk to SkinSync AI</h5>
+            <p class="text-muted-brown mb-0" style="font-size: 0.78rem;">Have a short voice or text chat and get an AI estimate of your skin type.</p>
+            <a href="{% url 'assistant:page' %}" class="btn-warm-action">Start Conversation →</a>
           </div>
         </div>
       </div>
@@ -308,43 +316,19 @@
 
     <!-- RIGHT SIDEBAR COLUMN -->
     <div class="col-lg-4">
-      
-      <!-- Quick Overview Card -->
+
+      <!-- Routine Streak Card -->
       <div class="dash-card mb-4">
         <div class="dash-card-body">
-          <div class="d-flex align-items-center gap-2 mb-3">
-            <span style="font-size: 1rem;">📊</span>
-            <h4 class="text-brown fw-bold mb-0" style="font-size: 0.95rem;">Quick Overview</h4>
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <span style="font-size: 1rem;">🔥</span>
+              <h4 class="text-brown fw-bold mb-0" style="font-size: 0.95rem;">Routine Streak</h4>
+            </div>
+            <span class="text-brown fw-bold">{{ routine_streak }} days</span>
           </div>
-          <div class="d-flex flex-column gap-2">
-            <div class="stat-mini-box d-flex justify-content-between align-items-center">
-              <div class="d-flex align-items-center gap-2">
-                <span style="font-size: 0.9rem;">📅</span>
-                <span class="text-muted-brown" style="font-size: 0.8rem;">Assessments Completed</span>
-              </div>
-              <span class="text-brown fw-bold">{{ total_assessments }}</span>
-            </div>
-            <div class="stat-mini-box d-flex justify-content-between align-items-center">
-              <div class="d-flex align-items-center gap-2">
-                <span style="font-size: 0.9rem;">🔥</span>
-                <span class="text-muted-brown" style="font-size: 0.8rem;">Current Routine Streak</span>
-              </div>
-              <span class="text-brown fw-bold">{{ routine_streak }} days</span>
-            </div>
-            <div class="stat-mini-box d-flex justify-content-between align-items-center">
-              <div class="d-flex align-items-center gap-2">
-                <span style="font-size: 0.9rem;">📅</span>
-                <span class="text-muted-brown" style="font-size: 0.8rem;">Days in Routine This Month</span>
-              </div>
-              <span class="text-brown fw-bold">{{ routine_days_this_month }}</span>
-            </div>
-            <div class="stat-mini-box d-flex justify-content-between align-items-center">
-              <div class="d-flex align-items-center gap-2">
-                <span style="font-size: 0.9rem;">🧴</span>
-                <span class="text-muted-brown" style="font-size: 0.8rem;">Products in Catalogue</span>
-              </div>
-              <span class="text-brown fw-bold">{{ recommended_products }}</span>
-            </div>
+          <div class="text-muted-brown">
+            {% if routine_streak >= 7 %}You're building a strong habit. Keep it up!{% elif routine_streak > 0 %}Complete both routines today to grow your streak.{% else %}Complete both routines to start your streak.{% endif %}
           </div>
         </div>
       </div>
