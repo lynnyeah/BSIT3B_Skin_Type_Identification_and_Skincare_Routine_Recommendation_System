@@ -56,10 +56,6 @@
   };
 
   var els = {
-    setupPanel: document.getElementById("setup-panel"),
-    startBtn: document.getElementById("start-btn"),
-    setupError: document.getElementById("setup-error"),
-    setupErrorText: document.getElementById("setup-error-text"),
     conversationPanel: document.getElementById("conversation-panel"),
     statusDot: document.getElementById("status-dot"),
     statusText: document.getElementById("status-text"),
@@ -179,18 +175,14 @@
     }
   }
 
+  /* The intro/set-up screen no longer exists, so any message that used to be
+   * shown there now appears inside the chat panel instead. */
   function showSetupError(message) {
-    if (!els.setupError) {
-      return;
-    }
-    els.setupErrorText.textContent = message;
-    els.setupError.hidden = false;
+    showConversationError(message);
   }
 
   function clearSetupError() {
-    if (els.setupError) {
-      els.setupError.hidden = true;
-    }
+    /* Kept for compatibility with the (now unused) voice flow. */
   }
 
   function showConversationError(message) {
@@ -1058,12 +1050,9 @@
 
   /* ----------------------------------------------------------- UI resets */
 
-  function prepareConversationView(mode) {
+  function prepareConversationView() {
     clearSetupError();
     clearConversationError();
-    if (els.setupPanel) {
-      els.setupPanel.hidden = true;
-    }
     if (els.resultsPanel) {
       els.resultsPanel.hidden = true;
     }
@@ -1074,13 +1063,13 @@
       els.transcript.textContent = "";
     }
     if (els.modeLabel) {
-      els.modeLabel.textContent = mode === "text" ? "Text" : "Voice";
+      els.modeLabel.textContent = "Text";
     }
     if (els.textForm) {
-      els.textForm.hidden = mode !== "text";
+      els.textForm.hidden = false;
     }
     if (els.muteBtn) {
-      els.muteBtn.hidden = mode !== "voice";
+      els.muteBtn.hidden = true;
       els.muteBtn.classList.remove("is-muted");
       updateMuteButton();
     }
@@ -1096,9 +1085,6 @@
     setStatus("Connecting\u2026", "");
     setOrb("off");
     setCaption("Preparing your conversation\u2026", "SkinSync AI's greeting will appear here.");
-    if (els.conversationPanel) {
-      els.conversationPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
   }
 
   function resetData() {
@@ -1121,11 +1107,8 @@
   }
 
   function resetView() {
-    if (els.setupPanel) {
-      els.setupPanel.hidden = false;
-    }
     if (els.conversationPanel) {
-      els.conversationPanel.hidden = true;
+      els.conversationPanel.hidden = false;
     }
     if (els.resultsPanel) {
       els.resultsPanel.hidden = true;
@@ -1140,7 +1123,7 @@
       els.textInput.value = "";
     }
     if (els.textForm) {
-      els.textForm.hidden = true;
+      els.textForm.hidden = false;
     }
     if (els.typing) {
       els.typing.hidden = true;
@@ -1154,7 +1137,7 @@
       updateMuteButton();
     }
     if (els.modeLabel) {
-      els.modeLabel.textContent = "Voice";
+      els.modeLabel.textContent = "Text";
     }
     if (els.analysisLink) {
       els.analysisLink.hidden = true;
@@ -1163,16 +1146,9 @@
     if (els.sendBtn) {
       els.sendBtn.disabled = false;
     }
-    if (els.startBtn) {
-      els.startBtn.disabled = !config.apiConfigured;
-      var startLabel = els.startBtn.querySelector("span");
-      if (startLabel) {
-        startLabel.textContent = "Start Conversation";
-      }
-    }
     clearSetupError();
     clearConversationError();
-    setStatus("Ready", "");
+    setStatus("Connecting\u2026", "");
     setOrb("off");
     setCaption("Preparing your conversation\u2026", "SkinSync AI's greeting will appear here.");
   }
@@ -1194,77 +1170,72 @@
     resetData();
     resetView();
     if (message) {
-      showSetupError(message);
+      showConversationError(message);
     }
   }
 
   /* --------------------------------------------------------------- start */
 
-  function startConversation() {
-    if (state.starting || state.active) {
+  /* Text chat is the only view now, and it opens as soon as the page loads:
+   * no mode selection or Start button. If the opening request fails, the
+   * user can retry simply by sending a message. */
+  function startChat(onReady) {
+    if (state.active) {
+      if (onReady) {
+        onReady(true);
+      }
+      return;
+    }
+    if (state.starting) {
       return;
     }
     if (!config.apiConfigured) {
-      showSetupError(
+      showConversationError(
         "Gemini is not configured. Add GEMINI_API_KEY to the project's .env file, then restart the Django server."
       );
+      setStatus("Not configured", "error");
+      setOrb("off");
+      setCaption("Assistant not available", "GEMINI_API_KEY is missing on the server.");
+      if (onReady) {
+        onReady(false);
+      }
       return;
     }
-
-    var selected = document.querySelector('input[name="assistant-mode"]:checked');
-    var mode = selected && selected.value === "text" ? "text" : "voice";
 
     state.runId += 1;
     var runId = state.runId;
     state.starting = true;
     state.userEnded = false;
-    clearSetupError();
+    state.mode = "text";
+    clearConversationError();
 
-    if (els.startBtn) {
-      els.startBtn.disabled = true;
-      var label = els.startBtn.querySelector("span");
-      if (label) {
-        label.textContent = "Starting\u2026";
-      }
-    }
+    prepareConversationView();
 
-    // Create and unlock playback inside the click gesture so the browser's
-    // autoplay policy does not block Gemini's first spoken reply.
-    if (mode === "voice") {
-      try {
-        ensurePlaybackContext();
-      } catch (error) {
-        /* Text mode remains available if audio is unsupported. */
-      }
-    }
-
-    prepareConversationView(mode);
-
-    var begin = mode === "voice" ? beginVoice(runId) : beginText(runId);
-
-    begin
+    beginText(runId)
       .catch(function (error) {
         if (runId !== state.runId) {
           return;
         }
         var sessionId = state.sessionId;
-        var wasActive = state.active;
-        returnToSetup(microphoneErrorMessage(error));
-        if (sessionId && wasActive) {
+        if (sessionId) {
           postJson(config.abandonUrl, { session_id: sessionId }).catch(function () {});
         }
+        showConversationError(
+          error && error.message
+            ? error.message
+            : "The conversation could not be started. Check your connection and try again."
+        );
+        setStatus("Chat not ready", "error");
+        setOrb("off");
+        setCaption("Conversation could not start", "Type a message below to try again.");
       })
       .finally(function () {
         if (runId !== state.runId) {
           return;
         }
         state.starting = false;
-        if (!state.active && els.startBtn) {
-          els.startBtn.disabled = !config.apiConfigured;
-          var startLabel = els.startBtn.querySelector("span");
-          if (startLabel) {
-            startLabel.textContent = "Start Conversation";
-          }
+        if (onReady) {
+          onReady(state.active);
         }
       });
   }
@@ -1351,11 +1322,21 @@
     if (event) {
       event.preventDefault();
     }
-    if (state.textSending || !state.active || state.mode !== "text" || state.finishing) {
+    if (state.textSending || state.starting || state.mode !== "text" || state.finishing) {
       return;
     }
     var text = els.textInput ? els.textInput.value.trim() : "";
     if (!text) {
+      return;
+    }
+    if (!state.active) {
+      // The opening session request failed earlier; try to establish the
+      // session again, then send the message the user just typed.
+      startChat(function (ready) {
+        if (ready) {
+          sendTextMessage();
+        }
+      });
       return;
     }
 
@@ -1604,9 +1585,6 @@
     if (els.conversationPanel) {
       els.conversationPanel.hidden = true;
     }
-    if (els.setupPanel) {
-      els.setupPanel.hidden = true;
-    }
     if (els.resultsPanel) {
       els.resultsPanel.hidden = false;
       els.resultsPanel.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1615,9 +1593,6 @@
 
   /* --------------------------------------------------------------- wiring */
 
-  if (els.startBtn) {
-    els.startBtn.addEventListener("click", startConversation);
-  }
   if (els.muteBtn) {
     els.muteBtn.addEventListener("click", toggleMute);
   }
@@ -1642,4 +1617,8 @@
   });
 
   resetView();
+
+  // Open the text chat immediately when the user lands on the AI Assistant
+  // page - no mode selection or Start button required.
+  startChat(null);
 })();

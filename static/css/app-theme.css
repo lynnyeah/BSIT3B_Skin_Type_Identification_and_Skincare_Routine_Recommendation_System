@@ -31,6 +31,54 @@
   --tblr-link-hover-color: var(--tblr-primary-active);
 }
 
+/* Replace all pink shades with light brown */
+:root {
+  --tblr-pink: #c19a6b;
+  --tblr-pink-rgb: 193, 154, 107;
+  --tblr-pink-lt: #f9f4ee;
+  --tblr-pink-lt-rgb: 249, 244, 238;
+  --tblr-pink-bg-subtle: #f3ece3;
+  --tblr-pink-border-subtle: #e7dbcb;
+  --tblr-pink-text-emphasis: #5c482f;
+}
+
+[data-bs-theme="dark"] {
+  --tblr-pink: #d2ab7c;
+  --tblr-pink-rgb: 210, 171, 124;
+  --tblr-pink-lt: #f5ede2;
+  --tblr-pink-lt-rgb: 245, 237, 226;
+}
+
+/* Hardcoded pink hexes in vendor CSS */
+.status-pink {
+  --tblr-status-color: var(--tblr-pink);
+}
+
+.toast-pink {
+  --tblr-toast-color: var(--tblr-pink);
+}
+
+/* Pink theme option now uses light brown */
+[data-bs-theme-primary="pink"] {
+  --tblr-primary: #c19a6b;
+  --tblr-primary-rgb: 193, 154, 107;
+}
+
+/* Pink-tinted gray base now uses a warm brown palette */
+[data-bs-theme-base="pink"] {
+  --tblr-gray-50: #faf6f1;
+  --tblr-gray-100: #f3ece3;
+  --tblr-gray-200: #e7dbcb;
+  --tblr-gray-300: #d3bfa4;
+  --tblr-gray-400: #b99d76;
+  --tblr-gray-500: #9a7b52;
+  --tblr-gray-600: #7a603f;
+  --tblr-gray-700: #5c482f;
+  --tblr-gray-800: #3f3120;
+  --tblr-gray-900: #2c2216;
+  --tblr-gray-950: #1b150d;
+}
+
 :root:not([data-bs-theme-primary]),
 [data-bs-theme="light"]:not([data-bs-theme-primary]) {
   --tblr-primary: #6366f1;

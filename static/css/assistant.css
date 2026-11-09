@@ -95,6 +95,23 @@
   margin-top: 0.15rem;
 }
 
+.assistant-chat-note {
+  color: var(--asst-muted);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  font-size: 0.78rem;
+  gap: 0.4rem;
+  line-height: 1.5;
+  margin: 0.4rem 0 0;
+  text-align: center;
+}
+
+.assistant-chat-note i {
+  color: var(--asst-accent);
+  margin-top: 0.15rem;
+}
+
 .assistant-header-badge {
   align-items: center;
   background: linear-gradient(140deg, #f7e9e1, #ead6ca);
