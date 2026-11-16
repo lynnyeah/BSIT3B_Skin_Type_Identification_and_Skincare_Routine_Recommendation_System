@@ -1,12 +1,7 @@
 """Prompt text and response schema for the Gemini skincare assistant."""
 
 GREETING_TEXT = (
-    "Hi! I'm SkinSync AI, your skincare assistant. Ask me anything about your "
-    "skin — concerns like oiliness, dryness, flaking, shine, sensitivity, or "
-    "breakouts, how to care for your skin type, product and ingredient "
-    "guidance, or routines. You can also ask me to estimate your likely skin "
-    "type and suggest a routine. This is an AI-generated guidance chat, not a "
-    "medical diagnosis. What would you like to know?"
+    "Hi! I'm SkinSync AI, your skincare assistant. What would you like to know?"
 )
 
 SKIN_TOPICS = [
