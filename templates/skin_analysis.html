@@ -55,7 +55,7 @@
 
   .main-layout {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1fr;
     gap: 2rem;
     align-items: start;
   }
@@ -107,6 +107,51 @@
 
   .question-section {
     margin-bottom: 2rem;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+  }
+
+  .question-section.question-out {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+
+  .question-section.question-out-back {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+
+  @keyframes questionSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(18px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes questionSlideInBack {
+    from {
+      opacity: 0;
+      transform: translateX(-18px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .question-section.question-in {
+    animation: questionSlideIn 0.25s ease;
+  }
+
+  .question-section.question-in-back {
+    animation: questionSlideInBack 0.25s ease;
+  }
+
+  .question-section.question-locked .answer-card {
+    pointer-events: none;
   }
 
   .question-title {
@@ -510,83 +555,6 @@
           </div>
         </form>
       </div>
-
-      <!-- Right Side: AI Skin Analysis Panel -->
-      <div class="ai-analysis-panel">
-        <div class="panel-header">
-          <h3 class="panel-title">
-            <i class="fas fa-brain"></i>
-            AI Skin Analysis
-          </h3>
-          <p class="panel-subtitle">Real-time analysis progress</p>
-        </div>
-
-        <div class="steps-section">
-          <div class="step-item completed" id="step1">
-            <div class="step-circle">1</div>
-            <div class="step-content">
-              <div class="step-title">Questionnaire Started</div>
-              <div class="step-desc">Collecting your skin information</div>
-            </div>
-          </div>
-          <div class="step-item active" id="step2">
-            <div class="step-circle">2</div>
-            <div class="step-content">
-              <div class="step-title">Questionnaire Completed</div>
-              <div class="step-desc">All responses gathered</div>
-            </div>
-          </div>
-          <div class="step-item" id="step3">
-            <div class="step-circle">3</div>
-            <div class="step-content">
-              <div class="step-title">Analyzing Responses</div>
-              <div class="step-desc">AI processing your data</div>
-            </div>
-          </div>
-          <div class="step-item" id="step4">
-            <div class="step-circle">4</div>
-            <div class="step-content">
-              <div class="step-title">Identifying Skin Type</div>
-              <div class="step-desc">& Generating Recommendations</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="analysis-progress">
-          <div class="analysis-progress-text">
-            <span>Analysis Progress</span>
-            <span id="analysisPercent">25%</span>
-          </div>
-          <div class="analysis-bar">
-            <div class="analysis-bar-fill" id="analysisBar" style="width: 25%"></div>
-          </div>
-        </div>
-
-        <div class="what-you-get">
-          <div class="what-you-get-title">
-            <i class="fas fa-gift"></i>
-            What You'll Get
-          </div>
-          <ul class="benefits-list">
-            <li>
-              <i class="fas fa-check-circle"></i>
-              Accurate skin type identification
-            </li>
-            <li>
-              <i class="fas fa-check-circle"></i>
-              Personalized skincare routine
-            </li>
-            <li>
-              <i class="fas fa-check-circle"></i>
-              Product recommendations
-            </li>
-            <li>
-              <i class="fas fa-check-circle"></i>
-              Skin care tips & advice
-            </li>
-          </ul>
-        </div>
-      </div>
     </div>
   </div>
 </div>
@@ -685,21 +653,10 @@
 
   let currentQuestionIndex = 0;
   let answers = {};
+  let isTransitioning = false;
+  let formSubmitted = false;
 
-  function selectAnswer(card) {
-    // Remove selection from all cards in current question
-    const cards = card.parentElement.querySelectorAll('.answer-card');
-    cards.forEach(c => c.classList.remove('selected'));
-    
-    // Select clicked card
-    card.classList.add('selected');
-    
-    // Store answer
-    const value = card.getAttribute('data-value');
-    const qNum = currentQuestionIndex + 1;
-    answers['q' + qNum] = value;
-    
-    // Update hidden input
+  function ensureHiddenInput(qNum, value) {
     let input = document.getElementById('q' + qNum);
     if (!input) {
       input = document.createElement('input');
@@ -709,6 +666,73 @@
       document.getElementById('hiddenInputs').appendChild(input);
     }
     input.value = value;
+    return input;
+  }
+
+  function selectAnswer(card) {
+    if (isTransitioning || formSubmitted) return;
+
+    const qNum = currentQuestionIndex + 1;
+    const value = card.getAttribute('data-value');
+
+    // Remove selection from all cards in current question
+    const cards = card.parentElement.querySelectorAll('.answer-card');
+    cards.forEach(c => c.classList.remove('selected'));
+
+    // Select clicked card
+    card.classList.add('selected');
+
+    // Store answer and keep the hidden input in sync
+    answers['q' + qNum] = value;
+    ensureHiddenInput(qNum, value);
+
+    const isLastQuestion = currentQuestionIndex === questions.length - 1;
+    isTransitioning = true;
+
+    if (isLastQuestion) {
+      // On the final question, submit the form to the existing analysis view.
+      const submitBtn = document.getElementById('submitBtn');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+      }
+      transitionQuestion(function() {
+        formSubmitted = true;
+        const form = document.getElementById('questionnaireForm');
+        if (typeof form.requestSubmit === 'function') {
+          form.requestSubmit();
+        } else {
+          form.submit();
+        }
+      }, 'forward');
+    } else {
+      transitionQuestion(function() {
+        currentQuestionIndex++;
+        updateQuestion();
+      }, 'forward');
+    }
+  }
+
+  function transitionQuestion(updateFn, direction) {
+    const section = document.getElementById('questionSection');
+    const outClass = direction === 'back' ? 'question-out-back' : 'question-out';
+    const inClass = direction === 'back' ? 'question-in-back' : 'question-in';
+
+    section.classList.add('question-locked');
+    section.classList.add(outClass);
+
+    window.setTimeout(function() {
+      updateFn();
+
+      section.classList.remove(outClass);
+      section.classList.remove('question-in', 'question-in-back');
+      void section.offsetWidth;
+      section.classList.add(inClass);
+
+      window.setTimeout(function() {
+        section.classList.remove(inClass, 'question-locked');
+        isTransitioning = false;
+      }, 250);
+    }, 180);
   }
 
   function updateQuestion() {
@@ -719,8 +743,6 @@
     // Update progress
     const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
     document.getElementById('progressBar').style.width = progress + '%';
-    document.getElementById('analysisPercent').textContent = Math.round(progress) + '%';
-    document.getElementById('analysisBar').style.width = progress + '%';
     
     // Update answer cards
     const grid = document.querySelector('.answers-grid');
@@ -740,16 +762,8 @@
     // Check if answer already exists for this question
     const qNum = currentQuestionIndex + 1;
     if (answers['q' + qNum]) {
-      // Ensure hidden input exists
-      let input = document.getElementById('q' + qNum);
-      if (!input) {
-        input = document.createElement('input');
-        input.type = 'hidden';
-        input.id = 'q' + qNum;
-        input.name = 'q' + qNum;
-        document.getElementById('hiddenInputs').appendChild(input);
-      }
-      input.value = answers['q' + qNum];
+      // Ensure hidden input exists and reflects the saved answer
+      ensureHiddenInput(qNum, answers['q' + qNum]);
       // Re-select card
       setTimeout(() => {
         grid.querySelectorAll('.answer-card').forEach(card => {
@@ -776,44 +790,59 @@
       document.getElementById('nextBtn').style.display = 'flex';
       document.getElementById('submitBtn').style.display = 'none';
     }
-    
-    // Update analysis panel steps
-    updateAnalysisSteps();
   }
 
   function nextQuestion() {
-    if (!document.querySelector('.answer-card.selected')) {
+    if (isTransitioning || formSubmitted) return;
+
+    const qNum = currentQuestionIndex + 1;
+    if (!answers['q' + qNum] && !document.querySelector('.answer-card.selected')) {
       alert('Please select an answer before continuing.');
       return;
     }
-    currentQuestionIndex++;
-    updateQuestion();
+
+    if (currentQuestionIndex === questions.length - 1) {
+      isTransitioning = true;
+      formSubmitted = true;
+      const form = document.getElementById('questionnaireForm');
+      if (typeof form.requestSubmit === 'function') {
+        form.requestSubmit();
+      } else {
+        form.submit();
+      }
+      return;
+    }
+
+    isTransitioning = true;
+    transitionQuestion(function() {
+      currentQuestionIndex++;
+      updateQuestion();
+    }, 'forward');
   }
 
   function previousQuestion() {
-    currentQuestionIndex--;
-    updateQuestion();
-  }
+    if (isTransitioning || formSubmitted) return;
+    if (currentQuestionIndex === 0) return;
 
-  function updateAnalysisSteps() {
-    const step2 = document.getElementById('step2');
-    const step3 = document.getElementById('step3');
-    const step4 = document.getElementById('step4');
-    
-    if (currentQuestionIndex >= questions.length - 1) {
-      step2.classList.remove('active');
-      step2.classList.add('completed');
-      step3.classList.add('active');
-    } else if (currentQuestionIndex >= 0) {
-      step2.classList.add('active');
-      step3.classList.remove('active');
-      step4.classList.remove('active');
-    }
+    isTransitioning = true;
+    transitionQuestion(function() {
+      currentQuestionIndex--;
+      updateQuestion();
+    }, 'back');
   }
 
   // Initialize
   document.addEventListener('DOMContentLoaded', function() {
     updateQuestion();
+
+    // Prevent duplicate submissions from rapid clicks.
+    document.getElementById('questionnaireForm').addEventListener('submit', function() {
+      formSubmitted = true;
+      const submitBtn = document.getElementById('submitBtn');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+      }
+    });
   });
 </script>
 {% endblock content %}
