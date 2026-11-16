@@ -368,31 +368,6 @@
 
       <div class="card routine-card mb-3">
         <div class="card-header">
-          <h5 class="mb-0" style="font-weight: 700;">Why These Ingredients</h5>
-        </div>
-        <div class="card-body">
-          {% for item in ingredient_details %}
-            <div class="note-box {% if not forloop.last %}mb-2{% endif %}">
-              <div class="d-flex align-items-start gap-2">
-                <i class="fa-solid fa-flask" style="color: var(--routine-accent-strong); margin-top: 0.2rem;"></i>
-                <div class="small" style="color: var(--routine-brown);">
-                  <strong>{{ item.name }}</strong>
-                  <div class="text-muted">{{ item.purpose }}</div>
-                </div>
-              </div>
-            </div>
-          {% empty %}
-            <div class="note-box">
-              <div class="small" style="color: var(--routine-brown);">
-                Take the skin analysis to generate a routine and see which ingredients suit you.
-              </div>
-            </div>
-          {% endfor %}
-        </div>
-      </div>
-
-      <div class="card routine-card mb-3">
-        <div class="card-header">
           <h5 class="mb-0" style="font-weight: 700;">Personalized Tips</h5>
         </div>
         <div class="card-body">
