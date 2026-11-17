@@ -294,41 +294,55 @@ html {
 }
 
 
-.dh-sidebar .navbar-brand {
-  padding: 1.1rem 1.25rem;
+.dh-sidebar .navbar-brand.dh-brand {
+  justify-content: flex-start;
+  min-width: 0;
+  padding: 1rem 1.15rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dh-brand > a {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  text-decoration: none;
 }
 
 .dh-brand-mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.35rem;
-  height: 2.35rem;
-  flex-shrink: 0;
+  width: 2.4rem;
+  height: 2.4rem;
+  flex: 0 0 auto;
   border-radius: 0.75rem;
-  color: #fff;
-  font-size: 1rem;
-  background: linear-gradient(135deg, #d9a99c 0%, #CD9C8B 100%);
-  box-shadow: 0 6px 16px -6px rgba(205, 156, 139, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #fff8f3;
+  font-size: 1.1rem;
+  line-height: 1;
+  background: linear-gradient(135deg, #a06a55 0%, #855443 100%);
+  box-shadow: 0 6px 16px -6px rgba(55, 32, 25, 0.7);
+}
+
+.dh-brand-mark i {
+  display: block;
+  line-height: 1;
 }
 
 .dh-brand-name {
   display: block;
+  min-width: 0;
   font-weight: 800;
   font-size: 1.05rem;
   letter-spacing: -0.02em;
-  color: #5c4338;
+  color: #4a2f24;
   line-height: 1.15;
+  white-space: nowrap;
 }
 
-.dh-brand-sub {
-  display: block;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(92, 67, 56, 0.60);
+.dh-brand-accent {
+  color: #6b3527;
 }
 
 .dh-nav-section {
@@ -410,10 +424,6 @@ html {
     background: #12142c;
     border-top: 1px solid rgba(255, 255, 255, 0.06);
     padding-bottom: 1rem;
-  }
-
-  .dh-brand-sub {
-    display: none;
   }
 }
 

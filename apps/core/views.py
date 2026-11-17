@@ -935,6 +935,7 @@ CONDITION_SCORES = {
 }
 
 ALLOWED_PHOTO_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp'}
+ALLOWED_PHOTO_FORMATS = {'JPEG', 'PNG', 'WEBP'}
 MAX_PHOTO_SIZE_MB = 5
 
 
@@ -1101,7 +1102,9 @@ def _validate_progress_photo(upload):
     if extension not in ALLOWED_PHOTO_EXTENSIONS:
         return 'Photo must be a JPG, PNG, or WEBP image.'
     try:
-        Image.open(upload).verify()
+        with Image.open(upload) as image:
+            image_format = (image.format or '').upper()
+            image.verify()
     except Exception:
         return 'That file does not look like a valid image.'
     finally:
@@ -1109,6 +1112,8 @@ def _validate_progress_photo(upload):
             upload.seek(0)
         except Exception:
             pass
+    if image_format not in ALLOWED_PHOTO_FORMATS:
+        return 'Photo must be a JPG, PNG, or WEBP image.'
     return None
 
 
@@ -1492,6 +1497,7 @@ def checkin_day_details(request):
     }
     if checkin:
         data['checkin'] = {
+            'id': checkin.pk,
             'date': checkin.date.isoformat(),
             'skin_condition': checkin.get_skin_condition_display(),
             'skin_condition_value': checkin.skin_condition,

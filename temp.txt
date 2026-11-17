@@ -1,7 +1,7 @@
 
   templates\theme\sidebar.html:99:              <i class="fa-solid fa-user"></i>
   templates\theme\sidebar.html:100:            </span>
-> templates\theme\sidebar.html:101:            <span class="nav-link-title">My Profile</span>
+> templates\theme\sidebar.html:101:            <span class="nav-link-title"></span>
   templates\theme\sidebar.html:102:          </a>
   templates\theme\sidebar.html:103:        </li>
   templates\theme\sidebar.html:104:

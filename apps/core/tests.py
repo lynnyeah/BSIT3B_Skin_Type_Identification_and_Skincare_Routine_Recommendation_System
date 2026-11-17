@@ -192,6 +192,22 @@ class ProgressPhotoTests(TestCase):
         self.client.post(CHECKIN_SAVE_URL, data)
         self.assertFalse(DailyCheckIn.objects.filter(user=self.user).exists())
 
+    def test_rejects_image_with_disallowed_content(self):
+        import io
+
+        from PIL import Image
+
+        buffer = io.BytesIO()
+        Image.new('RGB', (8, 8), color=(180, 200, 170)).save(buffer, format='BMP')
+        data = dict(VALID_CHECKIN_DATA)
+        data['photo'] = SimpleUploadedFile(
+            'selfie.png',
+            buffer.getvalue(),
+            content_type='image/png',
+        )
+        self.client.post(CHECKIN_SAVE_URL, data)
+        self.assertFalse(DailyCheckIn.objects.filter(user=self.user).exists())
+
     @staticmethod
     def _png_bytes():
         import io
@@ -229,6 +245,21 @@ class ProgressPhotoTests(TestCase):
         self.assertTrue(checkin.photo, 'A valid photo should be stored.')
         checkin.photo.delete(save=False)
 
+    def test_day_details_exposes_own_photo(self):
+        data = dict(VALID_CHECKIN_DATA)
+        data['photo'] = SimpleUploadedFile(
+            'selfie.png',
+            self._png_bytes(),
+            content_type='image/png',
+        )
+        self.client.post(CHECKIN_SAVE_URL, data)
+        checkin = DailyCheckIn.objects.get(user=self.user, date='2026-11-05')
+        response = self.client.get(DAY_DETAILS_URL + '?date=2026-11-05')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['checkin']['id'], checkin.pk)
+        self.assertEqual(response.json()['checkin']['photo'], checkin.photo.url)
+        checkin.photo.delete(save=False)
+
     def test_photo_delete_keeps_checkin(self):
         from apps.core.views import _validate_progress_photo
 
@@ -243,7 +274,7 @@ class ProgressPhotoTests(TestCase):
         self.client.post(CHECKIN_SAVE_URL, data)
         checkin = DailyCheckIn.objects.get(user=self.user, date='2026-11-05')
         response = self.client.post(PHOTO_DELETE_URL, {'id': checkin.pk})
-        self.assertRedirects(response, HISTORY_URL)
+        self.assertRedirects(response, HISTORY_URL, fetch_redirect_response=False)
         checkin.refresh_from_db()
         self.assertFalse(checkin.photo)
         self.assertTrue(DailyCheckIn.objects.filter(pk=checkin.pk).exists())

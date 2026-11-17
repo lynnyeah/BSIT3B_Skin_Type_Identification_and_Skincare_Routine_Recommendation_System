@@ -312,6 +312,24 @@
   flex-shrink: 0;
 }
 
+.sp-checkin-thumb {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--ah-border);
+  background: var(--ah-beige);
+  display: block;
+}
+
+.sp-checkin-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .ah-history-info {
   display: flex;
   flex-direction: column;
@@ -779,6 +797,37 @@ button.sp-day:hover {
 
 .sp-file { border-radius: 10px; padding: 7px 10px; }
 
+.sp-current-photo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--ah-border);
+  border-radius: 12px;
+  background: var(--ah-beige);
+}
+
+.sp-current-photo[hidden] { display: none; }
+
+.sp-current-photo a {
+  width: 72px;
+  height: 72px;
+  flex: 0 0 72px;
+  border-radius: 10px;
+  overflow: hidden;
+  display: block;
+}
+
+.sp-current-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.sp-current-photo .ah-btn { padding: 7px 14px; font-size: 12px; }
+
 .sp-check-line {
   display: inline-flex !important;
   align-items: center;
@@ -949,16 +998,120 @@ button.sp-day:hover {
 
 .sp-modal-header .modal-title i { color: var(--sp-sage-strong); margin-right: 6px; }
 
+.sp-modal > form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .sp-modal-body {
   padding: 20px 22px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .sp-modal-footer {
+  flex-shrink: 0;
   background: var(--ah-cream);
   border-top: 1px solid var(--ah-border);
+}
+
+/* Daily Skin Check-in modal: keep the dialog inside the viewport and
+   scroll only the form body, leaving the header and footer visible. */
+#checkinModal .modal-dialog {
+  height: auto;
+  max-height: 90vh;
+  max-height: 90dvh;
+  margin: 5vh auto;
+}
+
+#checkinModal .modal-dialog-centered {
+  min-height: calc(100vh - 10vh);
+  min-height: calc(100dvh - 10dvh);
+}
+
+#checkinModal .modal-content {
+  max-height: 90vh;
+  max-height: 90dvh;
+  overflow: hidden;
+}
+
+#checkinModal .modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  flex-shrink: 0;
+}
+
+#checkinModal .sp-modal > form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#checkinModal .sp-modal-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  min-height: 0;
+}
+
+#checkinModal .sp-modal-footer {
+  flex-shrink: 0;
+}
+
+@media (max-width: 991.98px) {
+  #checkinModal .modal-dialog {
+    max-height: 92vh;
+    max-height: 92dvh;
+    margin: 4vh auto;
+  }
+
+  #checkinModal .modal-dialog-centered {
+    min-height: calc(100vh - 8vh);
+    min-height: calc(100dvh - 8dvh);
+  }
+
+  #checkinModal .modal-content {
+    max-height: 92vh;
+    max-height: 92dvh;
+  }
+}
+
+@media (max-width: 575.98px) {
+  #checkinModal .modal-dialog {
+    width: calc(100% - 1rem);
+    max-height: 96vh;
+    max-height: 96dvh;
+    margin: 2vh auto;
+  }
+
+  #checkinModal .modal-dialog-centered {
+    min-height: calc(100vh - 4vh);
+    min-height: calc(100dvh - 4dvh);
+  }
+
+  #checkinModal .modal-content {
+    max-height: 96vh;
+    max-height: 96dvh;
+  }
+
+  #checkinModal .sp-modal-body {
+    padding: 16px;
+  }
+}
+
+/* Prevent the page behind any open modal from scrolling. */
+body.modal-open {
+  overflow: hidden;
 }
 
 /* Day details modal */

@@ -150,6 +150,7 @@
         <div class="sp-calendar-legend">
           <span><i class="sp-dot sp-dot-checkin"></i> Check-in</span>
           <span><i class="sp-dot sp-dot-routine"></i> Routine completed</span>
+          <span><i class="sp-dot sp-dot-photo"></i> Photo included</span>
         </div>
         <p class="sp-chart-note"><i class="fa-solid fa-hand-pointer"></i> Click any date to view everything saved for that day.</p>
       </div>
@@ -172,6 +173,11 @@
         <div class="ah-history-icon sp-checkin-icon">
           <i class="fa-regular fa-pen-to-square"></i>
         </div>
+        {% if checkin.photo %}
+        <a class="sp-checkin-thumb" href="{{ checkin.photo.url }}" target="_blank" rel="noopener">
+          <img src="{{ checkin.photo.url }}" alt="Skin progress photo for {{ checkin.date|date:'F d, Y' }}" loading="lazy">
+        </a>
+        {% endif %}
         <div class="ah-history-info">
           <span class="ah-history-date">{{ checkin.date|date:"F d, Y" }}</span>
           <div class="ah-history-meta">
@@ -565,6 +571,14 @@
               <label for="photoInput">Skin progress photo (optional)</label>
               <input type="file" id="photoInput" name="photo" accept=".jpg,.jpeg,.png,.webp" class="ah-search sp-file">
               <small class="sp-chart-note">JPG, PNG, or WEBP up to 5MB. Only you can see it.</small>
+              <div class="sp-current-photo" id="currentPhotoWrap" hidden>
+                <a id="currentPhotoLink" href="#" target="_blank" rel="noopener">
+                  <img id="currentPhotoPreview" src="" alt="Current progress photo">
+                </a>
+                <button type="button" class="ah-btn sp-btn-danger" id="removePhotoBtn">
+                  <i class="fa-solid fa-trash"></i> Remove photo
+                </button>
+              </div>
             </div>
             <div class="sp-form-row sp-grow">
               <label for="notesInput">Additional notes / skin changes</label>
@@ -580,6 +594,11 @@
     </div>
   </div>
 </div>
+
+<form method="post" action="{% url 'checkin_photo_delete' %}" id="photoDeleteForm" hidden>
+  {% csrf_token %}
+  <input type="hidden" name="id" id="photoDeleteId">
+</form>
 
 <!-- Day Details Modal -->
 <div class="modal fade" id="dayModal" tabindex="-1" aria-hidden="true">
@@ -654,9 +673,40 @@
   /* ---------- Check-in modal ---------- */
   const checkinModalEl = document.getElementById('checkinModal');
   const checkinModal = window.bootstrap ? new bootstrap.Modal(checkinModalEl) : null;
+  const checkinForm = document.getElementById('checkinForm');
+  const photoInput = document.getElementById('photoInput');
+  const photoDeleteForm = document.getElementById('photoDeleteForm');
+  const photoDeleteId = document.getElementById('photoDeleteId');
+  const currentPhotoWrap = document.getElementById('currentPhotoWrap');
+  const currentPhotoPreview = document.getElementById('currentPhotoPreview');
+  const currentPhotoLink = document.getElementById('currentPhotoLink');
+  const removePhotoBtn = document.getElementById('removePhotoBtn');
 
-  document.getElementById('openCheckinBtn').addEventListener('click', () => { if (checkinModal) checkinModal.show(); });
-  document.querySelectorAll('[data-open-checkin]').forEach(btn => btn.addEventListener('click', () => { if (checkinModal) checkinModal.show(); }));
+  function resetPhotoSelection() {
+    if (photoInput) { photoInput.value = ''; }
+  }
+
+  function hideCurrentPhoto() {
+    if (currentPhotoWrap) { currentPhotoWrap.hidden = true; }
+    if (currentPhotoPreview) { currentPhotoPreview.removeAttribute('src'); }
+    if (currentPhotoLink) { currentPhotoLink.removeAttribute('href'); }
+    if (photoDeleteId) { photoDeleteId.value = ''; }
+  }
+
+  function prepareNewCheckin() {
+    if (checkinForm) { checkinForm.reset(); }
+    resetPhotoSelection();
+    hideCurrentPhoto();
+    document.getElementById('checkinModalTitle').textContent = 'Daily Skin Check-in';
+  }
+
+  function openNewCheckin() {
+    prepareNewCheckin();
+    if (checkinModal) { checkinModal.show(); }
+  }
+
+  document.getElementById('openCheckinBtn').addEventListener('click', openNewCheckin);
+  document.querySelectorAll('[data-open-checkin]').forEach(btn => btn.addEventListener('click', openNewCheckin));
 
   function fillCheckinModal(checkin) {
     document.getElementById('checkinModalTitle').textContent = 'Edit Daily Check-in';
@@ -672,7 +722,44 @@
     setValue('productsUsed', checkin.products_used);
     setValue('ingredientsUsed', checkin.ingredients_used);
     setValue('notesInput', checkin.notes);
+    resetPhotoSelection();
+    if (checkin.photo) {
+      if (currentPhotoWrap) { currentPhotoWrap.hidden = false; }
+      if (currentPhotoPreview) { currentPhotoPreview.src = checkin.photo; }
+      if (currentPhotoLink) { currentPhotoLink.href = checkin.photo; }
+      if (photoDeleteId) { photoDeleteId.value = checkin.id || ''; }
+    } else {
+      hideCurrentPhoto();
+    }
   }
+
+  if (photoInput) {
+    photoInput.addEventListener('change', () => {
+      const file = photoInput.files && photoInput.files[0];
+      if (!file) { return; }
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (file.type && !allowedTypes.includes(file.type)) {
+        resetPhotoSelection();
+        alert('Please choose a JPG, PNG, or WEBP image.');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        resetPhotoSelection();
+        alert('Photo is too large. Maximum size is 5MB.');
+      }
+    });
+  }
+
+  if (removePhotoBtn) {
+    removePhotoBtn.addEventListener('click', () => {
+      if (!photoDeleteId || !photoDeleteId.value || !photoDeleteForm) { return; }
+      if (confirm('Remove this progress photo? The check-in will be kept.')) {
+        photoDeleteForm.submit();
+      }
+    });
+  }
+
+  checkinModalEl.addEventListener('hidden.bs.modal', resetPhotoSelection);
 
   function openDayDetails(day) {
     fetch('{% url 'checkin_day_details' %}?date=' + encodeURIComponent(day))
