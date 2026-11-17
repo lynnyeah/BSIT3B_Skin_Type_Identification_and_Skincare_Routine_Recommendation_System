@@ -199,7 +199,7 @@
         Track your morning and evening skincare steps, monitor consistency, and build healthy skin habits.
       </div>
     </div>
-    <span class="badge-progress">{{ overall_completed }}/{{ overall_total }} steps today · {{ overall_percent }}%</span>
+    <span class="badge-progress" id="overall-progress-badge">{{ overall_completed }}/{{ overall_total }} steps today · {{ overall_percent }}%</span>
   </div>
 
   <div class="row g-3">
@@ -211,6 +211,7 @@
               {% for day in week_days %}
                 <a href="{% url 'routine_planner' %}?date={{ day.iso }}"
                    class="btn day-pill {% if day.is_selected %}active{% endif %} {% if day.done_am or day.done_pm %}completed{% endif %}"
+                   data-day-date="{{ day.iso }}"
                    title="{{ day.date|date:'F d, Y' }}">
                   <span>{{ day.label }}</span>
                   <small>{{ day.number }}</small>
@@ -238,6 +239,7 @@
               <div class="step-item">
                 <input class="step-check" type="checkbox"
                        data-routine-id="{{ routine.id }}"
+                       data-routine-type="{{ routine.routine_type }}"
                        data-step-id="{{ step.id }}"
                        {% if routine.progress and step.id in routine.progress.completed_steps %}checked{% endif %}>
                 <div class="step-number">{{ step.step_number }}</div>
@@ -275,6 +277,7 @@
               <div class="step-item">
                 <input class="step-check" type="checkbox"
                        data-routine-id="{{ routine.id }}"
+                       data-routine-type="{{ routine.routine_type }}"
                        data-step-id="{{ step.id }}"
                        {% if routine.progress and step.id in routine.progress.completed_steps %}checked{% endif %}>
                 <div class="step-number">{{ step.step_number }}</div>
@@ -297,6 +300,18 @@
           <div class="card-body text-muted">Your evening routine is being prepared. Take the skin analysis to personalise it.</div>
         </div>
       {% endfor %}
+
+      {% if morning_routines or evening_routines %}
+        <div class="card routine-card mb-3">
+          <div class="card-body text-center">
+            <div class="text-muted small mb-2">Finished all Morning and Evening steps?</div>
+            <button type="button" class="btn btn-warm-primary px-4" id="mark-done-btn">
+              <i class="fa-solid fa-check me-1"></i>Done
+            </button>
+            <div class="text-muted small mt-2 d-none" id="done-feedback"></div>
+          </div>
+        </div>
+      {% endif %}
     </div>
 
     <div class="col-lg-4">
@@ -306,13 +321,13 @@
         </div>
         <div class="card-body">
           <div class="d-flex align-items-center justify-content-between mb-2">
-            <div class="fw-bold" style="font-size: 1.1rem;">🔥 {{ routine_streak }} Day Streak</div>
-            <div class="text-muted small">{% if routine_streak > 0 %}Keep going!{% else %}Start today!{% endif %}</div>
+            <div class="fw-bold" id="streak-value" style="font-size: 1.1rem;">🔥 {{ routine_streak }} Day Streak</div>
+            <div class="text-muted small" id="streak-status">{% if routine_streak > 0 %}Keep going!{% else %}Start today!{% endif %}</div>
           </div>
           <div class="streak-bar mb-2">
-            <div class="streak-bar-fill" style="width: {{ streak_percent }}%;"></div>
+            <div class="streak-bar-fill" id="streak-bar-fill" style="width: {{ streak_percent }}%;"></div>
           </div>
-          <div class="text-muted small">
+          <div class="text-muted small" id="streak-message">
             {% if routine_streak >= 7 %}You're building a strong habit. Keep it up!{% elif routine_streak > 0 %}Complete both routines to grow your streak.{% else %}Tick off every step to start your streak.{% endif %}
           </div>
         </div>
@@ -326,12 +341,12 @@
           <div class="week-grid mb-2">
             {% for day in week_days %}<div class="week-day">{{ day.label }}</div>{% endfor %}
             {% for day in week_days %}
-              <div class="week-cell {% if day.done_am %}done{% endif %}" title="Morning · {{ day.date|date:'M d' }}">
+              <div class="week-cell {% if day.done_am %}done{% endif %}" data-week-date="{{ day.iso }}" data-week-row="am" title="Morning · {{ day.date|date:'M d' }}">
                 <i class="fa-solid {% if day.done_am %}fa-check{% else %}fa-minus{% endif %}"></i>
               </div>
             {% endfor %}
             {% for day in week_days %}
-              <div class="week-cell {% if day.done_pm %}done{% endif %}" title="Evening · {{ day.date|date:'M d' }}">
+              <div class="week-cell {% if day.done_pm %}done{% endif %}" data-week-date="{{ day.iso }}" data-week-row="pm" title="Evening · {{ day.date|date:'M d' }}">
                 <i class="fa-solid {% if day.done_pm %}fa-check{% else %}fa-minus{% endif %}"></i>
               </div>
             {% endfor %}
@@ -451,7 +466,48 @@
       });
     }
 
-    document.querySelectorAll('.step-check').forEach(function (checkbox) {
+    var stepCheckboxes = Array.prototype.slice.call(document.querySelectorAll('.step-check'));
+
+    function updateOverallProgress() {
+      var badge = document.getElementById('overall-progress-badge');
+      if (!badge) { return; }
+      var total = stepCheckboxes.length;
+      var completed = stepCheckboxes.filter(function (cb) { return cb.checked; }).length;
+      var percent = total ? Math.round(completed / total * 100) : 0;
+      badge.textContent = completed + '/' + total + ' steps today · ' + percent + '%';
+    }
+
+    function setWeekRow(dateString, row, done) {
+      var cell = document.querySelector('[data-week-date="' + dateString + '"][data-week-row="' + row + '"]');
+      if (!cell) { return; }
+      cell.classList.toggle('done', done);
+      var icon = cell.querySelector('i');
+      if (icon) {
+        icon.classList.toggle('fa-check', done);
+        icon.classList.toggle('fa-minus', !done);
+      }
+    }
+
+    function refreshDayPill(dateString) {
+      var pill = document.querySelector('.day-pill[data-day-date="' + dateString + '"]');
+      if (!pill) { return; }
+      var amDone = document.querySelector('[data-week-date="' + dateString + '"][data-week-row="am"]');
+      var pmDone = document.querySelector('[data-week-date="' + dateString + '"][data-week-row="pm"]');
+      var anyDone = (amDone && amDone.classList.contains('done')) || (pmDone && pmDone.classList.contains('done'));
+      pill.classList.toggle('completed', !!anyDone);
+    }
+
+    function rowAllChecked(row) {
+      var routineType = row === 'am' ? 'morning' : 'night';
+      var rowBoxes = stepCheckboxes.filter(function (cb) {
+        return cb.dataset.routineType === routineType;
+      });
+      return rowBoxes.length > 0 && rowBoxes.every(function (cb) { return cb.checked; });
+    }
+
+    updateOverallProgress();
+
+    stepCheckboxes.forEach(function (checkbox) {
       checkbox.addEventListener('change', function () {
         checkbox.disabled = true;
         postJson('{% url "toggle_step_completion" %}', {
@@ -464,6 +520,10 @@
           if (badge) {
             badge.textContent = data.completed + '/' + data.total + ' Steps Completed';
           }
+          updateOverallProgress();
+          var row = checkbox.dataset.routineType === 'morning' ? 'am' : 'pm';
+          setWeekRow(pageDate, row, rowAllChecked(row));
+          refreshDayPill(pageDate);
         }).catch(function (error) {
           checkbox.checked = !checkbox.checked;
           window.alert(error.message);
@@ -472,6 +532,52 @@
         });
       });
     });
+
+    var doneButton = document.getElementById('mark-done-btn');
+    var doneFeedback = document.getElementById('done-feedback');
+    if (doneButton) {
+      doneButton.addEventListener('click', function () {
+        doneFeedback.classList.add('d-none');
+
+        if (!stepCheckboxes.length || !stepCheckboxes.every(function (cb) { return cb.checked; })) {
+          window.alert('Finish every Morning and Evening step first, then tap Done.');
+          return;
+        }
+
+        doneButton.disabled = true;
+        postJson('{% url "mark_routine_done" %}', { date: pageDate }).then(function (data) {
+          var streakValue = document.getElementById('streak-value');
+          if (streakValue) {
+            streakValue.textContent = '🔥 ' + data.streak + ' Day Streak';
+          }
+          var streakStatus = document.getElementById('streak-status');
+          if (streakStatus) {
+            streakStatus.textContent = data.streak > 0 ? 'Keep going!' : 'Start today!';
+          }
+          var streakBar = document.getElementById('streak-bar-fill');
+          if (streakBar) {
+            streakBar.style.width = data.streak_percent + '%';
+          }
+          var streakMessage = document.getElementById('streak-message');
+          if (streakMessage) {
+            streakMessage.textContent = data.streak >= 7
+              ? "You're building a strong habit. Keep it up!"
+              : 'Great job! Your routine is complete for this day.';
+          }
+
+          setWeekRow(pageDate, 'am', true);
+          setWeekRow(pageDate, 'pm', true);
+          refreshDayPill(pageDate);
+
+          doneFeedback.textContent = data.message;
+          doneFeedback.classList.remove('d-none');
+        }).catch(function (error) {
+          window.alert(error.message);
+        }).finally(function () {
+          doneButton.disabled = false;
+        });
+      });
+    }
 
     var addStepForm = document.getElementById('add-step-form');
     addStepForm.addEventListener('submit', function (event) {

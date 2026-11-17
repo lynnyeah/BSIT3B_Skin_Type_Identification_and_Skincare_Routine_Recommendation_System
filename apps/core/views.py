@@ -581,12 +581,14 @@ def _build_week(user, anchor_date):
     def day_done(routine_list, day):
         if not routine_list:
             return False
-        routine = routine_list[0]
-        progress = progress_map.get((routine.id, day))
-        if not progress:
-            return False
-        total = len(routine.steps.all())
-        return total > 0 and _completion_count(routine, progress) >= total
+        for routine in routine_list:
+            progress = progress_map.get((routine.id, day))
+            if not progress:
+                return False
+            total = len(routine.steps.all())
+            if total == 0 or _completion_count(routine, progress) < total:
+                return False
+        return True
 
     week_days = []
     for offset in range(7):
@@ -606,14 +608,28 @@ def _build_week(user, anchor_date):
 
 
 def _routine_streak(user):
-    from .models import RoutineProgress
+    from .models import RoutineProgress, SkincareRoutine
 
     today = date.today()
-    completed_dates = set(
-        RoutineProgress.objects.filter(
-            user=user, completed=True, date__lte=today
-        ).values_list('date', flat=True)
+    routine_ids = set(
+        SkincareRoutine.objects.filter(user=user).values_list('id', flat=True)
     )
+    if not routine_ids:
+        return 0
+
+    completed_by_date = {}
+    entries = RoutineProgress.objects.filter(
+        user=user, routine_id__in=routine_ids, completed=True, date__lte=today
+    ).values_list('date', 'routine_id')
+    for completed_date, routine_id in entries:
+        completed_by_date.setdefault(completed_date, set()).add(routine_id)
+
+    completed_dates = {
+        completed_date
+        for completed_date, done_ids in completed_by_date.items()
+        if routine_ids.issubset(done_ids)
+    }
+
     cursor = today if today in completed_dates else today - timedelta(days=1)
     streak = 0
     while cursor in completed_dates:
@@ -1764,6 +1780,92 @@ def toggle_step_completion(request):
             'total': total_steps,
             'percent': percent,
             'all_done': progress.completed,
+        })
+    except Exception as exc:
+        return JsonResponse({'success': False, 'error': str(exc)}, status=400)
+
+
+@login_required(login_url='login')
+@require_http_methods(['POST'])
+def mark_routine_done(request):
+    """Finalize the day's routines and return the updated streak."""
+    from .models import SkincareRoutine, RoutineProgress
+
+    try:
+        data = json.loads(request.body)
+        on_date = parse_date(data.get('date') or '') or date.today()
+
+        if on_date > date.today():
+            return JsonResponse(
+                {'success': False, 'error': 'You cannot complete a future date.'},
+                status=400,
+            )
+
+        routines = list(
+            SkincareRoutine.objects.filter(user=request.user).prefetch_related('steps')
+        )
+        if not routines:
+            return JsonResponse(
+                {'success': False, 'error': 'Your routine is not ready yet.'},
+                status=400,
+            )
+
+        total_steps = 0
+        completed_count = 0
+        incomplete_routines = []
+        progress_by_routine = {}
+
+        for routine in routines:
+            step_ids = {step.id for step in routine.steps.all()}
+            total_steps += len(step_ids)
+            progress, _ = RoutineProgress.objects.get_or_create(
+                user=request.user,
+                routine=routine,
+                date=on_date,
+                defaults={'completed_steps': []},
+            )
+            progress_by_routine[routine.id] = progress
+
+            completed_ids = {
+                int(step) for step in (progress.completed_steps or [])
+                if str(step).isdigit()
+            } & step_ids
+            completed_count += len(completed_ids)
+            if step_ids and not step_ids.issubset(completed_ids):
+                incomplete_routines.append(routine.name)
+
+        if total_steps == 0:
+            return JsonResponse(
+                {'success': False, 'error': 'Add steps to your routine first.'},
+                status=400,
+            )
+
+        if incomplete_routines:
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': (
+                        'Finish every Morning and Evening step first. '
+                        'Remaining: ' + ', '.join(incomplete_routines) + '.'
+                    ),
+                },
+                status=400,
+            )
+
+        for routine in routines:
+            progress = progress_by_routine[routine.id]
+            if not progress.completed:
+                progress.completed = True
+                progress.save(update_fields=['completed', 'updated_at'])
+
+        streak = _routine_streak(request.user)
+        return JsonResponse({
+            'success': True,
+            'streak': streak,
+            'streak_percent': min(int(streak / 7 * 100), 100),
+            'completed': completed_count,
+            'total': total_steps,
+            'message': 'Done! Your streak has been updated.',
         })
     except Exception as exc:
         return JsonResponse({'success': False, 'error': str(exc)}, status=400)

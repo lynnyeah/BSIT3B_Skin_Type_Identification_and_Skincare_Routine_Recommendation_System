@@ -10,6 +10,7 @@ urlpatterns = [
     path('routine-planner/', views.routine_planner, name='routine_planner'),
     path('my-recommendations/', views.my_recommendations_redirect, name='my_recommendations'),
     path('toggle-step/', views.toggle_step_completion, name='toggle_step_completion'),
+    path('mark-routine-done/', views.mark_routine_done, name='mark_routine_done'),
     path('add-routine-step/', views.add_routine_step, name='add_routine_step'),
     path('update-preferences/', views.update_preferences, name='update_preferences'),
     path('assessment-history/', views.skin_progress_history, name='assessment_history'),
