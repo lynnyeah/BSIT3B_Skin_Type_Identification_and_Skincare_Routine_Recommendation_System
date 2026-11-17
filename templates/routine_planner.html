@@ -360,29 +360,6 @@
 
       <div class="card routine-card mb-3">
         <div class="card-header">
-          <h5 class="mb-0" style="font-weight: 700;">Routine Notes</h5>
-        </div>
-        <div class="card-body">
-          {% for note in routine_notes %}
-            <div class="note-box {% if not forloop.last %}mb-2{% endif %}">
-              <div class="d-flex align-items-start gap-2">
-                <i class="fa-solid fa-note-sticky" style="color: var(--routine-accent-strong); margin-top: 0.2rem;"></i>
-                <div class="small" style="color: var(--routine-brown);"><strong>{{ note.product }}:</strong> {{ note.tip }}</div>
-              </div>
-            </div>
-          {% empty %}
-            <div class="note-box">
-              <div class="d-flex align-items-start gap-2">
-                <i class="fa-solid fa-note-sticky" style="color: var(--routine-accent-strong); margin-top: 0.2rem;"></i>
-                <div class="small" style="color: var(--routine-brown);">No product notes yet. Add products to your routine to see tips here.</div>
-              </div>
-            </div>
-          {% endfor %}
-        </div>
-      </div>
-
-      <div class="card routine-card mb-3">
-        <div class="card-header">
           <h5 class="mb-0" style="font-weight: 700;">Personalized Tips</h5>
         </div>
         <div class="card-body">

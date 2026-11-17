@@ -147,12 +147,13 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # The API key stays on the server. Browsers only receive short-lived tokens.
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '').strip()
 GEMINI_LIVE_MODEL = os.getenv('GEMINI_LIVE_MODEL', 'gemini-3.8-live').strip()
-GEMINI_TEXT_MODEL = os.getenv('GEMINI_TEXT_MODEL', 'gemini-3.8-flash').strip()
+GEMINI_TEXT_MODEL = os.getenv('GEMINI_TEXT_MODEL', 'gemini-3.5-flash-lite').strip()
 # Comma-separated models tried in order when the primary text model is
 # overloaded (HTTP 503) or unavailable. Keep at least one widely available
 # model in the list. Set to an empty string to rely on built-in defaults.
 GEMINI_TEXT_FALLBACK_MODELS = os.getenv(
-    'GEMINI_TEXT_FALLBACK_MODELS', 'gemini-3.5-flash-lite,gemini-2.5-flash-lite'
+    'GEMINI_TEXT_FALLBACK_MODELS',
+    'gemini-3.1-flash-lite,gemini-flash-lite-latest',
 ).strip()
 GEMINI_LIVE_VOICE = os.getenv('GEMINI_LIVE_VOICE', 'Aoede').strip()
 GEMINI_API_BASE = os.getenv(

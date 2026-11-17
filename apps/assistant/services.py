@@ -37,7 +37,7 @@ ASSESSMENT_MAX_OUTPUT_TOKENS = 4000
 
 # Modest, widely available models used when the primary text model is
 # overloaded (HTTP 503) or otherwise cannot serve the request.
-DEFAULT_TEXT_FALLBACK_MODELS = ["gemini-3.5-flash-lite", "gemini-2.5-flash-lite"]
+DEFAULT_TEXT_FALLBACK_MODELS = ["gemini-3.1-flash-lite", "gemini-flash-lite-latest"]
 
 SKIN_TYPE_LABELS = {
     "oily": "Oily",
@@ -114,7 +114,7 @@ def live_model() -> str:
 
 
 def text_model() -> str:
-    return (getattr(settings, "GEMINI_TEXT_MODEL", "") or "gemini-3.8-flash").strip()
+    return (getattr(settings, "GEMINI_TEXT_MODEL", "") or "gemini-3.5-flash-lite").strip()
 
 
 def text_model_chain() -> list[str]:
@@ -276,7 +276,9 @@ def _post_text(payload: dict[str, Any], *, timeout: int) -> dict[str, Any]:
 
     The fallback chain keeps text chat and assessment working when the primary
     model is temporarily overloaded (a 503 "high demand" response) or is not
-    available to this API key at all.
+    available to this API key at all. Each model is tried once so an overloaded
+    model cannot stall the request with repeated long retries; the chain itself
+    provides the retries.
     """
     chain = text_model_chain()
     last_error: GeminiError | None = None
@@ -286,6 +288,7 @@ def _post_text(payload: dict[str, Any], *, timeout: int) -> dict[str, Any]:
                 f"{_api_base()}/models/{model}:generateContent",
                 payload,
                 timeout=timeout,
+                attempts=1,
             )
         except GeminiError as exc:
             if isinstance(exc, GeminiConfigurationError):
