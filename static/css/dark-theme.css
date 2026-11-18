@@ -32,7 +32,7 @@ html[data-bs-theme="dark"] {
   --cream: #141110;
   --beige: #241e1c;
   --peach: #382a22;
-  --peach-accent: #e8b894;
+  --peach-accent: #c9a27e;
   --peach-strong: #f2b99c;
   --warm-brown: #ecdcd0;
   --text-dark: #ecdcd0;
@@ -68,8 +68,8 @@ html[data-bs-theme="dark"] .ah-journey-tip {
 html[data-bs-theme="dark"] .profile-page {
   --profile-brown: #ecdcd0;
   --profile-brown-light: rgba(236, 220, 208, 0.62);
-  --profile-accent: #d9a99c;
-  --profile-accent-strong: #cd9c8b;
+  --profile-accent: #b08968;
+  --profile-accent-strong: #96704f;
   color: var(--profile-brown);
 }
 
@@ -117,8 +117,8 @@ html[data-bs-theme="dark"] .dash-container .btn-warm-action:hover {
 html[data-bs-theme="dark"] .routine-page {
   --routine-brown: #ecdcd0;
   --routine-brown-light: rgba(236, 220, 208, 0.62);
-  --routine-accent: #d9a99c;
-  --routine-accent-strong: #cd9c8b;
+  --routine-accent: #b08968;
+  --routine-accent-strong: #96704f;
   --routine-border: rgba(236, 220, 208, 0.12);
   color: var(--routine-brown);
 }
@@ -151,6 +151,39 @@ html[data-bs-theme="dark"] .rp-panel-item {
 
 html[data-bs-theme="dark"] .rp-tip-card {
   background: radial-gradient(circle at top, rgba(232, 184, 148, 0.14), transparent 65%), #1e1918;
+}
+
+html[data-bs-theme="dark"] .routine-page .routine-undo-toast {
+  background: #1e1918;
+  border-color: rgba(236, 220, 208, 0.14);
+  box-shadow: 0 16px 36px -18px rgba(0, 0, 0, 0.75);
+  color: #ecdcd0;
+}
+
+html[data-bs-theme="dark"] .routine-page .routine-undo-copy i {
+  color: #c9a27e;
+}
+
+html[data-bs-theme="dark"] .routine-page .routine-undo-btn {
+  background: rgba(232, 184, 148, 0.14);
+  border-color: rgba(236, 220, 208, 0.18);
+  color: #f3e2d6;
+}
+
+html[data-bs-theme="dark"] .routine-page .routine-undo-btn:hover,
+html[data-bs-theme="dark"] .routine-page .routine-undo-btn:focus-visible {
+  background: rgba(232, 184, 148, 0.24);
+  border-color: rgba(236, 220, 208, 0.28);
+  color: #fffaf6;
+}
+
+html[data-bs-theme="dark"] .routine-page .routine-undo-close {
+  color: rgba(236, 220, 208, 0.62);
+}
+
+html[data-bs-theme="dark"] .routine-page .routine-undo-close:hover,
+html[data-bs-theme="dark"] .routine-page .routine-undo-close:focus-visible {
+  color: #f3e2d6;
 }
 
 /* Skin questionnaire */
@@ -337,7 +370,7 @@ html[data-bs-theme="dark"] .dash-container a.btn[style] {
 }
 
 html[data-bs-theme="dark"] .dash-container .progress-circle[style] {
-  border-top-color: #d9a99c !important;
+  border-top-color: #b08968 !important;
 }
 
 /* Assessment compare inline warning card */
@@ -351,7 +384,7 @@ html[data-bs-theme="dark"] .ah-btn-primary,
 html[data-bs-theme="dark"] .ah-btn-primary:hover,
 html[data-bs-theme="dark"] .ah-summary-icon,
 html[data-bs-theme="dark"] .ah-skin-badge {
-  background: linear-gradient(180deg, #e8b894, #cd9c8b);
+  background: linear-gradient(180deg, #c9a27e, #96704f);
   color: #4a352c;
 }
 
@@ -375,7 +408,7 @@ html[data-bs-theme="dark"] .sp-rating-option:has(input:checked) {
 html[data-bs-theme="dark"] .rec-dashboard .eyebrow,
 html[data-bs-theme="dark"] .rp-eyebrow {
   background: rgba(232, 184, 148, 0.16);
-  color: #e8b894;
+  color: #c9a27e;
 }
 
 html[data-bs-theme="dark"] .rec-dashboard .routine-card-header {
@@ -419,7 +452,7 @@ html[data-bs-theme="dark"] .auth-form-panel {
 
 html[data-bs-theme="dark"] .auth-brand-mark,
 html[data-bs-theme="dark"] .auth-mobile-brand .auth-brand-mark {
-  background: linear-gradient(145deg, #e8b894, #cd9c8b);
+  background: linear-gradient(145deg, #c9a27e, #96704f);
   color: #4a352c;
 }
 
@@ -466,11 +499,11 @@ html[data-bs-theme="dark"] .assistant-page {
   --asst-card: #1e1918;
   --asst-soft: #2a2220;
   --asst-soft-2: #241e1c;
-  --asst-accent: #e8b894;
+  --asst-accent: #c9a27e;
   --asst-accent-dark: #f2b99c;
   --asst-green: #8fae8c;
   --asst-red: #e79a90;
-  --asst-gold: #e8b894;
+  --asst-gold: #c9a27e;
   color: var(--asst-ink);
 }
 
@@ -499,6 +532,12 @@ html[data-bs-theme="dark"] .assistant-chip-soft {
   color: var(--asst-accent-dark);
 }
 
+html[data-bs-theme="dark"] .assistant-search-history-remove:hover,
+html[data-bs-theme="dark"] .assistant-search-history-remove:focus-visible {
+  background: rgba(231, 154, 144, 0.12);
+  border-color: rgba(231, 154, 144, 0.3);
+}
+
 html[data-bs-theme="dark"] .assistant-mode-card:hover {
   border-color: rgba(232, 184, 148, 0.4);
 }
@@ -515,7 +554,7 @@ html[data-bs-theme="dark"] .assistant-mode-icon {
 }
 
 html[data-bs-theme="dark"] .assistant-btn-primary {
-  background: linear-gradient(180deg, #e8b894 0%, #cd9c8b 100%);
+  background: linear-gradient(180deg, #c9a27e 0%, #96704f 100%);
   color: #3a251d;
 }
 

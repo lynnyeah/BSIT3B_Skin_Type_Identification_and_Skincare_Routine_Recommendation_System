@@ -16,8 +16,8 @@
   .routine-page {
     --routine-brown: #5c4338;
     --routine-brown-light: rgba(92, 67, 56, 0.72);
-    --routine-accent: #d9a99c;
-    --routine-accent-strong: #cd9c8b;
+  --routine-accent: #b08968;
+  --routine-accent-strong: #96704f;
     --routine-border: rgba(92, 67, 56, 0.12);
     color: var(--routine-brown);
   }
@@ -186,6 +186,109 @@
     background: linear-gradient(140deg, #f7f2ee 0%, #f3e7e1 100%);
     padding: 0.9rem 1rem;
   }
+
+  .step-remove-btn {
+    align-items: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 0.55rem;
+    color: #9b5548;
+    display: inline-flex;
+    font-size: 0.76rem;
+    font-weight: 600;
+    gap: 0.35rem;
+    line-height: 1.2;
+    padding: 0.28rem 0.55rem;
+  }
+
+  .step-remove-btn:hover,
+  .step-remove-btn:focus-visible {
+    background: rgba(169, 77, 66, 0.08);
+    border-color: rgba(169, 77, 66, 0.18);
+    color: #82453a;
+  }
+
+  .step-remove-btn:disabled {
+    cursor: wait;
+    opacity: 0.5;
+  }
+
+  .step-item.is-removing {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .routine-undo-toast {
+    align-items: center;
+    background: #fffdfb;
+    border: 1px solid var(--routine-border);
+    border-radius: 0.9rem;
+    bottom: 1.25rem;
+    box-shadow: 0 16px 36px -18px rgba(92, 67, 56, 0.6);
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    max-width: min(30rem, calc(100vw - 2rem));
+    padding: 0.8rem 0.9rem 0.8rem 1rem;
+    position: fixed;
+    right: 1.25rem;
+    z-index: 1080;
+  }
+
+  .routine-undo-toast[hidden] {
+    display: none;
+  }
+
+  .routine-undo-copy {
+    align-items: center;
+    display: flex;
+    font-size: 0.86rem;
+    gap: 0.5rem;
+  }
+
+  .routine-undo-copy i {
+    color: var(--routine-accent-strong);
+  }
+
+  .routine-undo-btn {
+    background: rgba(217, 169, 156, 0.24);
+    border: 1px solid rgba(150, 112, 79, 0.24);
+    border-radius: 0.6rem;
+    color: var(--routine-brown);
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 0.4rem 0.75rem;
+    white-space: nowrap;
+  }
+
+  .routine-undo-btn:hover,
+  .routine-undo-btn:focus-visible {
+    background: rgba(217, 169, 156, 0.4);
+  }
+
+  .routine-undo-btn:disabled {
+    cursor: wait;
+    opacity: 0.6;
+  }
+
+  .routine-undo-close {
+    background: transparent;
+    border: 0;
+    color: var(--routine-brown-light);
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0.2rem;
+  }
+
+  @media (max-width: 575.98px) {
+    .routine-undo-toast {
+      align-items: flex-start;
+      bottom: 1rem;
+      left: 1rem;
+      max-width: none;
+      right: 1rem;
+    }
+  }
 </style>
 {% endblock extra_css %}
 
@@ -246,7 +349,17 @@
                 <div class="flex-grow-1">
                   <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                     <div class="fw-semibold" style="color: var(--routine-brown);">{{ step.product.category|title }}: {{ step.product.name }}</div>
-                    <span class="step-tag">{{ step.product.category|title }}</span>
+                    <div class="d-flex align-items-center gap-2">
+                      <button type="button" class="step-remove-btn"
+                              data-routine-id="{{ routine.id }}"
+                              data-routine-type="{{ routine.routine_type }}"
+                              data-step-id="{{ step.id }}"
+                              title="Remove {{ step.product.name }}"
+                              aria-label="Remove {{ step.product.name }} from {{ routine.name }}">
+                        <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                        <span>Remove</span>
+                      </button>
+                    </div>
                   </div>
                   <div class="text-muted small">{{ step.instructions|default:step.product.description }}</div>
                   {% if step.tip %}<div class="text-muted small mt-1"><i class="fa-solid fa-lightbulb me-1"></i>{{ step.tip }}</div>{% endif %}
@@ -284,7 +397,17 @@
                 <div class="flex-grow-1">
                   <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                     <div class="fw-semibold" style="color: var(--routine-brown);">{{ step.product.category|title }}: {{ step.product.name }}</div>
-                    <span class="step-tag">{{ step.product.category|title }}</span>
+                    <div class="d-flex align-items-center gap-2">
+                      <button type="button" class="step-remove-btn"
+                              data-routine-id="{{ routine.id }}"
+                              data-routine-type="{{ routine.routine_type }}"
+                              data-step-id="{{ step.id }}"
+                              title="Remove {{ step.product.name }}"
+                              aria-label="Remove {{ step.product.name }} from {{ routine.name }}">
+                        <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                        <span>Remove</span>
+                      </button>
+                    </div>
                   </div>
                   <div class="text-muted small">{{ step.instructions|default:step.product.description }}</div>
                   {% if step.tip %}<div class="text-muted small mt-1"><i class="fa-solid fa-lightbulb me-1"></i>{{ step.tip }}</div>{% endif %}
@@ -375,6 +498,19 @@
       <button type="button" class="btn btn-warm-primary w-100" data-bs-toggle="modal" data-bs-target="#addStepModal">
         <i class="fa-solid fa-plus me-1"></i>Add Custom Routine Step
       </button>
+    </div>
+  </div>
+
+  <div class="routine-undo-toast" id="routine-undo-toast" role="status" aria-live="polite" hidden>
+    <div class="routine-undo-copy">
+      <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+      <span id="routine-undo-message">Step removed.</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <button type="button" class="routine-undo-btn" id="routine-undo-btn">
+        <i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Undo
+      </button>
+      <button type="button" class="routine-undo-close" id="routine-undo-close" aria-label="Dismiss">&times;</button>
     </div>
   </div>
 </div>
@@ -509,6 +645,107 @@
         });
       });
     });
+
+    var undoToast = document.getElementById('routine-undo-toast');
+    var undoMessage = document.getElementById('routine-undo-message');
+    var undoButton = document.getElementById('routine-undo-btn');
+    var undoClose = document.getElementById('routine-undo-close');
+    var lastRemovedStep = null;
+
+    function routineRow(routineType) {
+      return routineType === 'morning' ? 'am' : 'pm';
+    }
+
+    function hideUndoToast() {
+      lastRemovedStep = null;
+      if (undoToast) { undoToast.hidden = true; }
+    }
+
+    function showUndoToast(label, removedStep) {
+      lastRemovedStep = removedStep;
+      if (undoMessage) { undoMessage.textContent = 'Removed ' + label + '.'; }
+      if (undoToast) { undoToast.hidden = false; }
+    }
+
+    function renumberRoutineSteps(routineId) {
+      var card = document.getElementById('routine-' + routineId);
+      if (!card) { return; }
+      var items = card.querySelectorAll('.step-item');
+      Array.prototype.forEach.call(items, function (item, index) {
+        var number = item.querySelector('.step-number');
+        if (number) { number.textContent = index + 1; }
+      });
+
+      var emptyMessage = card.querySelector('.routine-empty-message');
+      if (!items.length && !emptyMessage) {
+        var body = card.querySelector('.card-body');
+        if (body) {
+          emptyMessage = document.createElement('p');
+          emptyMessage.className = 'text-muted mb-0 routine-empty-message';
+          emptyMessage.textContent = 'No steps yet. Add a new step or undo the removal.';
+          body.appendChild(emptyMessage);
+        }
+      } else if (items.length && emptyMessage) {
+        emptyMessage.remove();
+      }
+    }
+
+    function updateRoutineBadge(routineId, completed, total) {
+      var badge = document.querySelector('[data-routine-badge="' + routineId + '"]');
+      if (badge) {
+        badge.textContent = completed + '/' + total + ' Steps Completed';
+      }
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll('.step-remove-btn'), function (button) {
+      button.addEventListener('click', function () {
+        var routineId = button.dataset.routineId;
+        var stepItem = button.closest('.step-item');
+        button.disabled = true;
+        if (stepItem) { stepItem.classList.add('is-removing'); }
+
+        postJson('{% url "remove_routine_step" %}', {
+          routine_id: routineId,
+          step_id: button.dataset.stepId,
+          date: pageDate
+        }).then(function (data) {
+          if (stepItem) { stepItem.remove(); }
+          stepCheckboxes = Array.prototype.slice.call(document.querySelectorAll('.step-check'));
+          updateRoutineBadge(routineId, data.completed, data.total);
+          renumberRoutineSteps(routineId);
+          updateOverallProgress();
+          var row = routineRow(button.dataset.routineType);
+          setWeekRow(pageDate, row, rowAllChecked(row));
+          refreshDayPill(pageDate);
+          showUndoToast(data.label, data.removed_step);
+        }).catch(function (error) {
+          button.disabled = false;
+          if (stepItem) { stepItem.classList.remove('is-removing'); }
+          window.alert(error.message);
+        });
+      });
+    });
+
+    if (undoClose) {
+      undoClose.addEventListener('click', hideUndoToast);
+    }
+
+    if (undoButton) {
+      undoButton.addEventListener('click', function () {
+        if (!lastRemovedStep) { hideUndoToast(); return; }
+        undoButton.disabled = true;
+
+        postJson('{% url "undo_remove_routine_step" %}', {
+          removed_step: lastRemovedStep,
+          date: pageDate
+        }).then(function () {
+          window.location.reload();
+        }).catch(function (error) {
+          undoButton.disabled = false;
+          window.alert(error.message);
+        });
+      });
+    }
 
     var doneButton = document.getElementById('mark-done-btn');
     var doneFeedback = document.getElementById('done-feedback');

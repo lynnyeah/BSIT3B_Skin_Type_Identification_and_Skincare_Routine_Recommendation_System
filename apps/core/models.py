@@ -115,6 +115,7 @@ class SkincareRoutine(models.Model):
         max_length=10,
         choices=ROUTINE_TYPES,
     )
+    customized = models.BooleanField(default=False)
     products = models.ManyToManyField(
         SkincareProduct,
         through="RoutineStep",

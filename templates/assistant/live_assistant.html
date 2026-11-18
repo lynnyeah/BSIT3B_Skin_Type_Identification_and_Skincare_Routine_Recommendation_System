@@ -40,96 +40,149 @@
   </div>
   {% endif %}
 
-  <section class="assistant-panel assistant-conversation" id="conversation-panel">
-    <div class="assistant-conversation-head">
-      <div class="assistant-status" role="status" aria-live="polite">
-        <span class="assistant-status-dot" id="status-dot"></span>
-        <span id="status-text">Connecting&hellip;</span>
-      </div>
-      <div class="assistant-conversation-meta">
-        <span class="assistant-chip" id="mode-label">Text</span>
-        <span class="assistant-chip assistant-timer" id="timer" hidden>
-          <i class="fa-regular fa-clock"></i>
-          <span id="timer-text">14:00</span>
-        </span>
-        <button type="button" class="assistant-icon-btn" id="mute-btn" hidden aria-pressed="false" title="Mute microphone">
-          <i class="fa-solid fa-microphone"></i>
-          <span class="visually-hidden">Mute microphone</span>
-        </button>
-      </div>
+  <div class="assistant-workspace is-history-collapsed" id="assistant-workspace">
+    <div class="assistant-workspace-main">
+      <section class="assistant-panel assistant-conversation" id="conversation-panel">
+        <div class="assistant-conversation-head">
+          <div class="assistant-status" role="status" aria-live="polite">
+            <span class="assistant-status-dot" id="status-dot"></span>
+            <span id="status-text">Connecting&hellip;</span>
+          </div>
+          <div class="assistant-conversation-meta">
+            <span class="assistant-chip" id="mode-label">Text</span>
+            <span class="assistant-chip assistant-timer" id="timer" hidden>
+              <i class="fa-regular fa-clock"></i>
+              <span id="timer-text">14:00</span>
+            </span>
+            <button type="button" class="assistant-icon-btn" id="mute-btn" hidden aria-pressed="false" title="Mute microphone">
+              <i class="fa-solid fa-microphone"></i>
+              <span class="visually-hidden">Mute microphone</span>
+            </button>
+            <button type="button" class="assistant-btn assistant-btn-ghost assistant-new-chat" id="new-chat-btn">
+              <i class="fa-solid fa-plus"></i>
+              <span>New chat</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="assistant-live-band" id="live-band">
+          <div class="assistant-orb" id="assistant-orb">
+            <i class="fa-solid fa-wave-square"></i>
+          </div>
+          <div>
+            <strong id="live-caption">Preparing your conversation&hellip;</strong>
+            <p id="live-subcaption">SkinSync AI&rsquo;s answers will appear here.</p>
+          </div>
+        </div>
+
+        <div class="assistant-transcript" id="transcript" role="log" aria-live="polite" aria-label="Conversation transcript"></div>
+
+        <form class="assistant-text-form" id="text-form">
+          {% csrf_token %}
+          <label for="text-input" class="visually-hidden">Your question</label>
+          <textarea id="text-input" rows="2" maxlength="4000" placeholder="Ask a question about your skin&hellip;" autocomplete="off"></textarea>
+          <button type="submit" class="assistant-btn assistant-btn-primary" id="send-btn">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>Send</span>
+          </button>
+        </form>
+
+        <p class="assistant-chat-note">
+          <i class="fa-solid fa-circle-info"></i>
+          SkinSync AI can make mistakes - consult a dermatologist for medical advice.
+        </p>
+
+        <div class="assistant-typing" id="typing-indicator" hidden>
+          <span></span><span></span><span></span>
+          <em>SkinSync AI is thinking&hellip;</em>
+        </div>
+
+        <div class="assistant-alert assistant-alert-error" id="conversation-error" role="alert" hidden>
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <div>
+            <strong>Conversation problem</strong>
+            <p id="conversation-error-text"></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="assistant-panel assistant-results" id="results-panel" hidden>
+        <div class="assistant-results-head">
+          <div>
+            <span class="assistant-eyebrow"><i class="fa-solid fa-wand-magic-sparkles"></i> AI guidance</span>
+            <h2>Your skincare snapshot</h2>
+            <p>Based only on what you shared in this conversation.</p>
+          </div>
+          <span class="assistant-chip assistant-chip-soft">
+            <i class="fa-solid fa-robot"></i> AI-generated estimate
+          </span>
+        </div>
+
+        <div id="results-content"></div>
+
+        <div class="assistant-results-actions">
+          <a href="#" class="assistant-btn assistant-btn-primary" id="analysis-link" hidden>
+            <i class="fa-solid fa-file-lines"></i>
+            <span>View saved assessment</span>
+          </a>
+          <a href="{% url 'routine_planner' %}" class="assistant-btn assistant-btn-soft" id="recommendations-link">
+            <i class="fa-solid fa-lightbulb"></i>
+            <span>View my routine</span>
+          </a>
+        </div>
+      </section>
     </div>
 
-    <div class="assistant-live-band" id="live-band">
-      <div class="assistant-orb" id="assistant-orb">
-        <i class="fa-solid fa-wave-square"></i>
-      </div>
-      <div>
-        <strong id="live-caption">Preparing your conversation&hellip;</strong>
-        <p id="live-subcaption">SkinSync AI&rsquo;s answers will appear here.</p>
-      </div>
-    </div>
-
-    <div class="assistant-transcript" id="transcript" role="log" aria-live="polite" aria-label="Conversation transcript"></div>
-
-    <form class="assistant-text-form" id="text-form">
-      {% csrf_token %}
-      <label for="text-input" class="visually-hidden">Your question</label>
-      <textarea id="text-input" rows="2" maxlength="4000" placeholder="Ask a question about your skin&hellip;" autocomplete="off"></textarea>
-      <button type="submit" class="assistant-btn assistant-btn-primary" id="send-btn">
-        <i class="fa-solid fa-paper-plane"></i>
-        <span>Send</span>
+    <aside class="assistant-panel assistant-search-history assistant-history-sidebar is-collapsed" id="search-history" aria-label="Search history">
+      <button type="button" class="assistant-history-toggle" id="history-toggle" aria-expanded="false" aria-controls="search-history-body" title="Expand search history">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        <span class="assistant-history-toggle-label">Search history</span>
+        <i class="fa-solid fa-chevron-left assistant-history-toggle-chevron" aria-hidden="true"></i>
       </button>
-    </form>
 
-    <p class="assistant-chat-note">
-      <i class="fa-solid fa-circle-info"></i>
-      SkinSync AI can make mistakes - consult a dermatologist for medical advice.
-    </p>
+      <div class="assistant-history-sidebar-body" id="search-history-body">
+        <div class="assistant-panel-head">
+          <span class="assistant-chip assistant-chip-soft" id="search-history-count"{% if not search_history %} hidden{% endif %}>
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>{{ search_history|length|default:0 }} recent</span>
+          </span>
+        </div>
 
-    <div class="assistant-typing" id="typing-indicator" hidden>
-      <span></span><span></span><span></span>
-      <em>SkinSync AI is thinking&hellip;</em>
-    </div>
-
-    <div class="assistant-alert assistant-alert-error" id="conversation-error" role="alert" hidden>
-      <i class="fa-solid fa-triangle-exclamation"></i>
-      <div>
-        <strong>Conversation problem</strong>
-        <p id="conversation-error-text"></p>
+        {% if search_history %}
+        <ul class="assistant-search-history-list">
+          {% for item in search_history %}
+          <li class="assistant-search-history-entry">
+            <button type="button" class="assistant-search-history-item" data-session-id="{{ item.session_id }}">
+              <span class="assistant-search-history-icon" aria-hidden="true">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </span>
+              <span class="assistant-search-history-copy">
+                <span class="assistant-search-history-text">{{ item.text|truncatechars:180 }}</span>
+              </span>
+              <i class="fa-solid fa-chevron-right assistant-search-history-chevron" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="assistant-search-history-remove" data-session-id="{{ item.session_id }}" title="Remove from history" aria-label="Remove conversation from history">
+              <i class="fa-solid fa-trash" aria-hidden="true"></i>
+            </button>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="assistant-search-history-empty">
+          <i class="fa-regular fa-clock" aria-hidden="true"></i>
+          No searches yet. Your questions to SkinSync AI will appear here.
+        </p>
+        {% endif %}
       </div>
-    </div>
-  </section>
-
-  <section class="assistant-panel assistant-results" id="results-panel" hidden>
-    <div class="assistant-results-head">
-      <div>
-        <span class="assistant-eyebrow"><i class="fa-solid fa-wand-magic-sparkles"></i> AI guidance</span>
-        <h2>Your skincare snapshot</h2>
-        <p>Based only on what you shared in this conversation.</p>
-      </div>
-      <span class="assistant-chip assistant-chip-soft">
-        <i class="fa-solid fa-robot"></i> AI-generated estimate
-      </span>
-    </div>
-
-    <div id="results-content"></div>
-
-    <div class="assistant-results-actions">
-      <a href="#" class="assistant-btn assistant-btn-primary" id="analysis-link" hidden>
-        <i class="fa-solid fa-file-lines"></i>
-        <span>View saved assessment</span>
-      </a>
-      <a href="{% url 'routine_planner' %}" class="assistant-btn assistant-btn-soft" id="recommendations-link">
-        <i class="fa-solid fa-lightbulb"></i>
-        <span>View my routine</span>
-      </a>
-    </div>
-  </section>
+    </aside>
+  </div>
 </div>
 
 <script id="assistant-config" type="application/json">
   {
     "sessionUrl": "{% url 'assistant:session' %}",
+    "sessionDetailUrl": "{% url 'assistant:session_detail' 0 %}",
+    "removeHistoryUrl": "{% url 'assistant:remove_history' %}",
     "chatUrl": "{% url 'assistant:chat' %}",
     "abandonUrl": "{% url 'assistant:abandon' %}",
     "apiConfigured": {{ api_configured|yesno:"true,false" }},

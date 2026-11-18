@@ -450,11 +450,12 @@ def _ensure_user_routines(user):
             )
         elif routine.skin_type != blueprint_key:
             routine.skin_type = blueprint_key
-            routine.save(update_fields=['skin_type'])
+            routine.customized = False
+            routine.save(update_fields=['skin_type', 'customized'])
             routine.steps.all().delete()
             RoutineProgress.objects.filter(routine=routine).delete()
 
-        if not routine.steps.exists():
+        if not routine.steps.exists() and not routine.customized:
             for index, product_name in enumerate(product_names, start=1):
                 product = catalog.get(product_name)
                 if product is None:
@@ -1943,12 +1944,195 @@ def add_routine_step(request):
             duration_minutes=duration,
             tip=(data.get('tip') or '').strip(),
         )
+        if not routine.customized:
+            routine.customized = True
+            routine.save(update_fields=['customized'])
 
         return JsonResponse({
             'success': True,
             'step_id': step.id,
             'step_number': step.step_number,
             'product': product.name,
+        })
+    except Exception as exc:
+        return JsonResponse({'success': False, 'error': str(exc)}, status=400)
+
+
+@login_required(login_url='login')
+@require_http_methods(['POST'])
+def remove_routine_step(request):
+    from django.db import transaction
+
+    from .models import RoutineProgress, SkincareRoutine
+
+    try:
+        data = json.loads(request.body)
+        routine = SkincareRoutine.objects.filter(
+            id=data.get('routine_id'), user=request.user
+        ).first()
+        if routine is None:
+            return JsonResponse(
+                {'success': False, 'error': 'Routine not found.'}, status=404
+            )
+
+        try:
+            step_id = int(data.get('step_id'))
+        except (TypeError, ValueError):
+            return JsonResponse(
+                {'success': False, 'error': 'Invalid step.'}, status=400
+            )
+
+        with transaction.atomic():
+            step = (
+                routine.steps.select_related('product')
+                .filter(id=step_id)
+                .first()
+            )
+            if step is None:
+                return JsonResponse(
+                    {
+                        'success': False,
+                        'error': 'That step is no longer in this routine.',
+                    },
+                    status=404,
+                )
+
+            removed_number = step.step_number
+            removed_step = {
+                'routine_id': routine.id,
+                'step_number': removed_number,
+                'product_id': step.product_id,
+                'instructions': step.instructions,
+                'duration_minutes': step.duration_minutes,
+                'tip': step.tip,
+                'product_name': step.product.name,
+                'category': step.product.get_category_display(),
+            }
+            step.delete()
+
+            for later_step in (
+                routine.steps.filter(step_number__gt=removed_number)
+                .order_by('step_number')
+            ):
+                later_step.step_number -= 1
+                later_step.save(update_fields=['step_number'])
+
+            if not routine.customized:
+                routine.customized = True
+                routine.save(update_fields=['customized'])
+
+        on_date = parse_date(data.get('date') or '') or date.today()
+        progress = RoutineProgress.objects.filter(
+            user=request.user, routine=routine, date=on_date
+        ).first()
+        total_steps = routine.steps.count()
+        completed_steps = _completion_count(routine, progress)
+
+        return JsonResponse({
+            'success': True,
+            'routine_id': routine.id,
+            'total': total_steps,
+            'completed': completed_steps,
+            'all_done': total_steps > 0 and completed_steps >= total_steps,
+            'removed_step': removed_step,
+            'label': (
+                f"{removed_step['category']}: {removed_step['product_name']}"
+            ),
+        })
+    except Exception as exc:
+        return JsonResponse({'success': False, 'error': str(exc)}, status=400)
+
+
+@login_required(login_url='login')
+@require_http_methods(['POST'])
+def undo_remove_routine_step(request):
+    from django.db import transaction
+
+    from .models import (
+        RoutineProgress,
+        RoutineStep,
+        SkincareProduct,
+        SkincareRoutine,
+    )
+
+    try:
+        data = json.loads(request.body)
+        removed_step = data.get('removed_step') or {}
+        routine = SkincareRoutine.objects.filter(
+            id=removed_step.get('routine_id'), user=request.user
+        ).first()
+        product = SkincareProduct.objects.filter(
+            id=removed_step.get('product_id'), is_active=True
+        ).first()
+
+        if routine is None:
+            return JsonResponse(
+                {'success': False, 'error': 'Routine not found.'}, status=404
+            )
+        if product is None:
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': 'That product is no longer available.',
+                },
+                status=400,
+            )
+
+        try:
+            step_number = int(removed_step.get('step_number') or 0)
+        except (TypeError, ValueError):
+            step_number = 0
+        try:
+            duration = max(
+                1, min(int(removed_step.get('duration_minutes', 1)), 120)
+            )
+        except (TypeError, ValueError):
+            duration = 1
+
+        with transaction.atomic():
+            total_steps = routine.steps.count()
+            target_number = max(
+                1, min(step_number or total_steps + 1, total_steps + 1)
+            )
+
+            for existing_step in (
+                routine.steps.filter(step_number__gte=target_number)
+                .order_by('-step_number')
+            ):
+                existing_step.step_number += 1
+                existing_step.save(update_fields=['step_number'])
+
+            step = RoutineStep.objects.create(
+                routine=routine,
+                product=product,
+                step_number=target_number,
+                instructions=(
+                    removed_step.get('instructions') or ''
+                ).strip(),
+                duration_minutes=duration,
+                tip=(removed_step.get('tip') or '').strip(),
+            )
+
+            if not routine.customized:
+                routine.customized = True
+                routine.save(update_fields=['customized'])
+
+        on_date = parse_date(data.get('date') or '') or date.today()
+        progress = RoutineProgress.objects.filter(
+            user=request.user, routine=routine, date=on_date
+        ).first()
+        total_steps = routine.steps.count()
+        completed_steps = _completion_count(routine, progress)
+
+        return JsonResponse({
+            'success': True,
+            'routine_id': routine.id,
+            'step_id': step.id,
+            'step_number': step.step_number,
+            'total': total_steps,
+            'completed': completed_steps,
+            'all_done': total_steps > 0 and completed_steps >= total_steps,
+            'label': f'{product.get_category_display()}: {product.name}',
         })
     except Exception as exc:
         return JsonResponse({'success': False, 'error': str(exc)}, status=400)

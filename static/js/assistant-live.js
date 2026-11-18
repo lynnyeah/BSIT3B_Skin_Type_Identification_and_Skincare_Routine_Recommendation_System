@@ -22,6 +22,7 @@
   var INPUT_RATE = 16000;
   var OUTPUT_RATE = 24000;
   var CAPTURE_BUFFER = 2048;
+  var SESSION_STORAGE_KEY = "skinsyncAssistantSessionId";
 
   var state = {
     runId: 0,
@@ -29,7 +30,9 @@
     sessionId: null,
     active: false,
     starting: false,
+    restoring: false,
     finishing: false,
+    historyLoading: false,
     textSending: false,
     timeUp: false,
     muted: false,
@@ -63,7 +66,9 @@
     timer: document.getElementById("timer"),
     timerText: document.getElementById("timer-text"),
     muteBtn: document.getElementById("mute-btn"),
+    newChatBtn: document.getElementById("new-chat-btn"),
     orb: document.getElementById("assistant-orb"),
+    liveBand: document.getElementById("live-band"),
     liveCaption: document.getElementById("live-caption"),
     liveSubcaption: document.getElementById("live-subcaption"),
     transcript: document.getElementById("transcript"),
@@ -73,6 +78,9 @@
     typing: document.getElementById("typing-indicator"),
     conversationError: document.getElementById("conversation-error"),
     conversationErrorText: document.getElementById("conversation-error-text"),
+    workspace: document.getElementById("assistant-workspace"),
+    historySidebar: document.getElementById("search-history"),
+    historyToggle: document.getElementById("history-toggle"),
     resultsPanel: document.getElementById("results-panel"),
     resultsContent: document.getElementById("results-content"),
     analysisLink: document.getElementById("analysis-link")
@@ -133,6 +141,106 @@
       }
       throw error;
     });
+  }
+
+  function getJson(url) {
+    return fetch(url, {
+      method: "GET",
+      credentials: "same-origin",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest"
+      }
+    }).then(function (response) {
+      return response
+        .json()
+        .catch(function () {
+          return {};
+        })
+        .then(function (data) {
+          if (!response.ok) {
+            throw new Error(
+              (data && data.error) ||
+                "The request could not be completed (" + response.status + ")."
+            );
+          }
+          return data;
+        });
+    }).catch(function (error) {
+      if (!error.status && error && error.name === "TypeError") {
+        throw new Error("Could not reach the SkinSync server. Check your connection and try again.");
+      }
+      throw error;
+    });
+  }
+
+  function saveSessionId(sessionId) {
+    try {
+      if (sessionId) {
+        window.sessionStorage.setItem(SESSION_STORAGE_KEY, String(sessionId));
+      }
+    } catch (error) {
+      /* storage can be unavailable in private browsing modes */
+    }
+  }
+
+  function clearSavedSessionId() {
+    try {
+      window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    } catch (error) {
+      /* storage can be unavailable in private browsing modes */
+    }
+  }
+
+  function savedSessionId() {
+    try {
+      return window.sessionStorage.getItem(SESSION_STORAGE_KEY);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function isPageReload() {
+    var entries = window.performance && window.performance.getEntriesByType
+      ? window.performance.getEntriesByType("navigation")
+      : [];
+    if (entries && entries.length) {
+      return entries[0].type === "reload";
+    }
+    return Boolean(
+      window.performance &&
+        window.performance.navigation &&
+        window.performance.navigation.type === 1
+    );
+  }
+
+  function sessionDetailUrl(sessionId, resume) {
+    var url = String(config.sessionDetailUrl || "").replace(
+      /0\/$/,
+      String(sessionId) + "/"
+    );
+    return resume ? url + "?resume=1" : url;
+  }
+
+  function setHistoryExpanded(expanded) {
+    if (els.workspace) {
+      els.workspace.classList.toggle("is-history-collapsed", !expanded);
+    }
+    if (els.historySidebar) {
+      els.historySidebar.classList.toggle("is-collapsed", !expanded);
+    }
+    if (els.historyToggle) {
+      els.historyToggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+      els.historyToggle.title = expanded
+        ? "Minimize search history"
+        : "Expand search history";
+      var chevron = els.historyToggle.querySelector(
+        ".assistant-history-toggle-chevron"
+      );
+      if (chevron) {
+        chevron.classList.toggle("fa-chevron-right", expanded);
+        chevron.classList.toggle("fa-chevron-left", !expanded);
+      }
+    }
   }
 
   function isPlainObject(value) {
@@ -294,6 +402,218 @@
 
   function addSystemMessage(text) {
     addMessage("system", text);
+  }
+
+  function updateSearchHistoryMeta() {
+    var section = document.getElementById("search-history");
+    if (!section) {
+      return;
+    }
+
+    var body = section.querySelector(".assistant-history-sidebar-body") || section;
+    var list = body.querySelector(".assistant-search-history-list");
+    var total = list ? list.children.length : 0;
+    var count = document.getElementById("search-history-count");
+    if (count) {
+      var label = count.querySelector("span");
+      if (label) {
+        label.textContent = total + " recent";
+      }
+      count.hidden = total === 0;
+    }
+
+    if (total) {
+      return;
+    }
+
+    if (list) {
+      list.remove();
+    }
+    if (!body.querySelector(".assistant-search-history-empty")) {
+      var empty = make("p", "assistant-search-history-empty");
+      var emptyIcon = make("i", "fa-regular fa-clock");
+      emptyIcon.setAttribute("aria-hidden", "true");
+      empty.appendChild(emptyIcon);
+      empty.appendChild(
+        document.createTextNode(
+          " No searches yet. Your questions to SkinSync AI will appear here."
+        )
+      );
+      body.appendChild(empty);
+    }
+  }
+
+  function addSearchHistoryEntry(text) {
+    var section = document.getElementById("search-history");
+    if (!section || !String(text || "").trim()) {
+      return;
+    }
+
+    var body = section.querySelector(".assistant-history-sidebar-body") || section;
+    var list = body.querySelector(".assistant-search-history-list");
+    if (!list) {
+      list = make("ul", "assistant-search-history-list");
+      var empty = body.querySelector(".assistant-search-history-empty");
+      if (empty && empty.parentNode) {
+        empty.parentNode.replaceChild(list, empty);
+      } else {
+        body.appendChild(list);
+      }
+    }
+
+    var entry = make("li", "assistant-search-history-entry");
+    var item = make("button", "assistant-search-history-item");
+    item.type = "button";
+    if (state.sessionId) {
+      item.setAttribute("data-session-id", String(state.sessionId));
+    }
+
+    var icon = make("span", "assistant-search-history-icon");
+    icon.setAttribute("aria-hidden", "true");
+    icon.appendChild(make("i", "fa-solid fa-magnifying-glass"));
+    item.appendChild(icon);
+
+    var copy = make("span", "assistant-search-history-copy");
+    copy.appendChild(make("span", "assistant-search-history-text", text));
+    item.appendChild(copy);
+    item.appendChild(make("i", "fa-solid fa-chevron-right assistant-search-history-chevron"));
+    entry.appendChild(item);
+
+    if (state.sessionId) {
+      var removeButton = make("button", "assistant-search-history-remove");
+      removeButton.type = "button";
+      removeButton.setAttribute("data-session-id", String(state.sessionId));
+      removeButton.title = "Remove from history";
+      removeButton.setAttribute("aria-label", "Remove conversation from history");
+      var removeIcon = make("i", "fa-solid fa-trash");
+      removeIcon.setAttribute("aria-hidden", "true");
+      removeButton.appendChild(removeIcon);
+      entry.appendChild(removeButton);
+    }
+
+    list.insertBefore(entry, list.firstChild);
+    while (list.children.length > 15) {
+      list.removeChild(list.lastChild);
+    }
+
+    updateSearchHistoryMeta();
+  }
+
+  function removeSearchHistoryEntry(button) {
+    var entry = button.closest(".assistant-search-history-entry");
+    var sessionId = button.getAttribute("data-session-id");
+    if (!entry || !sessionId) {
+      return;
+    }
+
+    button.disabled = true;
+    postJson(config.removeHistoryUrl, { session_id: sessionId })
+      .then(function () {
+        entry.remove();
+        updateSearchHistoryMeta();
+      })
+      .catch(function (error) {
+        button.disabled = false;
+        showConversationError(error.message);
+      });
+  }
+
+  function renderCurrentConversation() {
+    if (els.transcript) {
+      els.transcript.textContent = "";
+    }
+    (state.conversation || []).forEach(function (item) {
+      if (!item || !item.text) {
+        return;
+      }
+      addMessage(item.role === "user" ? "user" : "assistant", item.text);
+    });
+    scrollTranscript();
+  }
+
+  function openHistoryConversation(sessionId) {
+    if (
+      !sessionId ||
+      state.historyLoading ||
+      state.textSending ||
+      state.starting ||
+      state.restoring ||
+      state.finishing
+    ) {
+      return;
+    }
+
+    var previousId = state.sessionId;
+    var previousActive = state.active;
+    state.historyLoading = true;
+    clearConversationError();
+    setStatus("Loading conversation\u2026", "");
+
+    getJson(sessionDetailUrl(sessionId, true))
+      .then(function (data) {
+        if (!data || data.success !== true) {
+          throw new Error("The saved conversation could not be loaded.");
+        }
+
+        var transcript = Array.isArray(data.transcript) ? data.transcript : [];
+        if (!transcript.length) {
+          throw new Error("This conversation has no messages to continue.");
+        }
+
+        stopEverything();
+        prepareConversationView();
+
+        state.mode = "text";
+        state.sessionId = data.session_id;
+        state.active = true;
+        state.maxSeconds = data.max_seconds || config.maxSeconds;
+        state.conversation = transcript
+          .filter(function (item) {
+            return item && item.text;
+          })
+          .map(function (item) {
+            return {
+              role: item.role === "user" ? "user" : "assistant",
+              text: String(item.text)
+            };
+          });
+        state.pendingUser = null;
+        state.pendingAssistant = null;
+        saveSessionId(data.session_id);
+        renderCurrentConversation();
+        setStatus("Waiting for your message", "live");
+        setOrb("listening");
+        setCaption("Your turn", "Type your next message below.");
+        clearConversationError();
+        if (els.textInput) {
+          els.textInput.focus();
+        }
+
+        if (
+          previousActive &&
+          previousId &&
+          String(previousId) !== String(data.session_id)
+        ) {
+          postJson(config.abandonUrl, { session_id: previousId }).catch(function () {});
+        }
+      })
+      .catch(function (error) {
+        showConversationError(
+          error && error.message
+            ? error.message
+            : "The saved conversation could not be loaded."
+        );
+        if (state.active) {
+          setStatus("Waiting for your message", "live");
+          setOrb("listening");
+        } else {
+          setStatus("History not available", "error");
+          setOrb("off");
+        }
+      })
+      .finally(function () {
+        state.historyLoading = false;
+      });
   }
 
   function commitPendingUser() {
@@ -1062,6 +1382,9 @@
     if (els.transcript) {
       els.transcript.textContent = "";
     }
+    if (els.liveBand) {
+      els.liveBand.hidden = false;
+    }
     if (els.modeLabel) {
       els.modeLabel.textContent = "Text";
     }
@@ -1092,6 +1415,8 @@
     state.sessionId = null;
     state.active = false;
     state.starting = false;
+    state.restoring = false;
+    state.historyLoading = false;
     state.finishing = false;
     state.textSending = false;
     state.timeUp = false;
@@ -1115,6 +1440,9 @@
     }
     if (els.transcript) {
       els.transcript.textContent = "";
+    }
+    if (els.liveBand) {
+      els.liveBand.hidden = false;
     }
     if (els.resultsContent) {
       els.resultsContent.textContent = "";
@@ -1256,6 +1584,7 @@
       state.sessionId = data.session_id;
       state.active = true;
       state.maxSeconds = data.max_seconds || config.maxSeconds;
+      saveSessionId(data.session_id);
 
       var greeting = data.greeting || "Hi! I'm SkinSync AI. Ask me anything about your skin.";
       addMessage("assistant", greeting);
@@ -1322,7 +1651,13 @@
     if (event) {
       event.preventDefault();
     }
-    if (state.textSending || state.starting || state.mode !== "text" || state.finishing) {
+    if (
+      state.textSending ||
+      state.starting ||
+      state.restoring ||
+      state.mode !== "text" ||
+      state.finishing
+    ) {
       return;
     }
     var text = els.textInput ? els.textInput.value.trim() : "";
@@ -1341,6 +1676,16 @@
     }
 
     var runId = state.runId;
+    var isFirstUserMessage = !state.conversation.some(function (item) {
+      if (!item || item.role !== "user") {
+        return false;
+      }
+      var value = String(item.text || "").trim().toLowerCase();
+      return !(
+        value.indexOf("hello, i'm ready to begin") === 0 ||
+        value.indexOf("hello, i\u2019m ready to begin") === 0
+      );
+    });
     clearConversationError();
     var bubble = addMessage("user", text);
     state.conversation.push({ role: "user", text: text });
@@ -1369,6 +1714,9 @@
         var reply = data.reply;
         addMessage("assistant", reply);
         state.conversation.push({ role: "assistant", text: reply });
+        if (isFirstUserMessage) {
+          addSearchHistoryEntry(text);
+        }
 
         setStatus("Waiting for your message", "live");
         setOrb("listening");
@@ -1591,10 +1939,109 @@
     }
   }
 
+  /* ----------------------------------------------------- saved navigation */
+
+  function startNewChat() {
+    if (
+      state.starting ||
+      state.restoring ||
+      state.textSending ||
+      state.historyLoading
+    ) {
+      return;
+    }
+    var currentId = state.sessionId;
+    if (currentId && state.active) {
+      postJson(config.abandonUrl, { session_id: currentId }).catch(function () {});
+    }
+    clearSavedSessionId();
+    stopEverything();
+    resetData();
+    resetView();
+    startChat(null);
+  }
+
+  function restoreSavedSession(sessionId) {
+    state.restoring = true;
+    clearConversationError();
+    prepareConversationView();
+
+    getJson(sessionDetailUrl(sessionId))
+      .then(function (data) {
+        state.restoring = false;
+        if (!data || data.success !== true) {
+          throw new Error("The previous conversation could not be restored.");
+        }
+        if (data.status !== "active") {
+          clearSavedSessionId();
+          startChat(null);
+          return;
+        }
+
+        var transcript = Array.isArray(data.transcript) ? data.transcript : [];
+        if (!transcript.length) {
+          clearSavedSessionId();
+          startChat(null);
+          return;
+        }
+
+        state.mode = "text";
+        state.sessionId = data.session_id;
+        state.active = true;
+        state.maxSeconds = data.max_seconds || config.maxSeconds;
+        state.conversation = transcript
+          .filter(function (item) {
+            return item && item.text;
+          })
+          .map(function (item) {
+            return {
+              role: item.role === "user" ? "user" : "assistant",
+              text: String(item.text)
+            };
+          });
+        saveSessionId(data.session_id);
+        renderCurrentConversation();
+        setStatus("Waiting for your message", "live");
+        setOrb("listening");
+        setCaption("Your turn", "Type your next message below.");
+        if (els.textInput) {
+          els.textInput.focus();
+        }
+      })
+      .catch(function (error) {
+        state.restoring = false;
+        clearSavedSessionId();
+        startChat(null);
+      });
+  }
+
+  function restoreOrStartChat() {
+    if (isPageReload()) {
+      clearSavedSessionId();
+      startChat(null);
+      return;
+    }
+
+    var sessionId = savedSessionId();
+    if (!sessionId) {
+      startChat(null);
+      return;
+    }
+    restoreSavedSession(sessionId);
+  }
+
   /* --------------------------------------------------------------- wiring */
 
   if (els.muteBtn) {
     els.muteBtn.addEventListener("click", toggleMute);
+  }
+  if (els.newChatBtn) {
+    els.newChatBtn.addEventListener("click", startNewChat);
+  }
+  if (els.historyToggle) {
+    els.historyToggle.addEventListener("click", function () {
+      setHistoryExpanded(els.historySidebar.classList.contains("is-collapsed"));
+    });
   }
   if (els.textForm) {
     els.textForm.addEventListener("submit", sendTextMessage);
@@ -1604,6 +2051,31 @@
       if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
         sendTextMessage();
+      }
+    });
+  }
+
+  var historySection = document.getElementById("search-history");
+  if (historySection) {
+    historySection.addEventListener("click", function (event) {
+      var target = event.target;
+      var removeButton = target && target.closest
+        ? target.closest(".assistant-search-history-remove")
+        : null;
+      if (removeButton && historySection.contains(removeButton)) {
+        removeSearchHistoryEntry(removeButton);
+        return;
+      }
+
+      var button = target && target.closest
+        ? target.closest(".assistant-search-history-item")
+        : null;
+      if (!button || !historySection.contains(button)) {
+        return;
+      }
+      var sessionId = button.getAttribute("data-session-id");
+      if (sessionId) {
+        openHistoryConversation(sessionId);
       }
     });
   }
@@ -1618,7 +2090,7 @@
 
   resetView();
 
-  // Open the text chat immediately when the user lands on the AI Assistant
-  // page - no mode selection or Start button required.
-  startChat(null);
+  // Resume the conversation after in-app navigation. A full browser refresh
+  // starts a fresh conversation instead.
+  restoreOrStartChat();
 })();

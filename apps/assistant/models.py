@@ -29,6 +29,7 @@ class AssistantSession(models.Model):
     )
     mode = models.CharField(max_length=10, choices=MODES, default="voice")
     status = models.CharField(max_length=12, choices=STATUSES, default="active")
+    hidden_from_history = models.BooleanField(default=False)
     transcript = models.JSONField(default=list, blank=True)
     assessment = models.JSONField(default=dict, blank=True)
     primary_skin_type = models.CharField(max_length=20, blank=True)

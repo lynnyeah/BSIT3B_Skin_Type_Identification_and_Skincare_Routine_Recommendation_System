@@ -4,8 +4,8 @@
   --auth-brown: #5c4338;
   --auth-brown-dark: #4a352c;
   --auth-brown-soft: #7d5c4d;
-  --auth-accent: #d9a99c;
-  --auth-accent-strong: #c58f7f;
+  --auth-accent: #b08968;
+  --auth-accent-strong: #96704f;
   --auth-text: #3f2f28;
   --auth-muted: #8b7469;
   --auth-border: #eadbd3;
@@ -81,7 +81,7 @@ body.auth-body {
   width: 3rem;
   height: 3rem;
   border-radius: 0.95rem;
-  background: linear-gradient(145deg, #f4e3d9, #d9a99c);
+  background: linear-gradient(145deg, #f4e3d9, #b08968);
   color: var(--auth-brown-dark);
   font-size: 1.15rem;
   box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.55);
@@ -131,7 +131,7 @@ body.auth-body {
 }
 
 .auth-eyebrow-light {
-  color: #ecc9bd;
+  color: #e7c9b6;
 }
 
 .auth-brand-copy h1 {
@@ -178,7 +178,7 @@ body.auth-body {
   border-radius: 0.6rem;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  color: #f0cec2;
+  color: #e7c9b6;
   font-size: 0.78rem;
   flex: 0 0 auto;
 }
@@ -277,6 +277,7 @@ body.auth-body {
   border-radius: 0.8rem;
   background: #fdfaf8;
   color: var(--auth-text);
+  color-scheme: light;
   font-size: 0.87rem;
   transition: border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
 }
@@ -292,7 +293,19 @@ body.auth-body {
 .auth-input-group .form-control:focus {
   border-color: var(--auth-accent-strong);
   background: #ffffff;
-  box-shadow: 0 0 0 4px rgba(217, 169, 156, 0.22);
+  box-shadow: 0 0 0 4px rgba(176, 137, 104, 0.22);
+}
+
+.auth-input-group .form-control:autofill,
+.auth-input-group .form-control:-webkit-autofill,
+.auth-input-group .form-control:-webkit-autofill:hover,
+.auth-input-group .form-control:-webkit-autofill:focus {
+  background-color: #fdfaf8;
+  -webkit-box-shadow: 0 0 0 1000px #fdfaf8 inset;
+  box-shadow: 0 0 0 1000px #fdfaf8 inset;
+  color: var(--auth-text);
+  -webkit-text-fill-color: var(--auth-text);
+  caret-color: var(--auth-text);
 }
 
 .auth-input-group .form-control.is-invalid {

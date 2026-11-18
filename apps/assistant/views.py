@@ -106,6 +106,43 @@ def _result_payload(session: AssistantSession) -> dict:
     }
 
 
+def _search_history(user, limit: int = 15) -> list:
+    """Return one entry per conversation, using its first user question."""
+    history = []
+    sessions = (
+        AssistantSession.objects.filter(user=user, hidden_from_history=False)
+        .order_by("-started_at")[:30]
+    )
+    for session in sessions:
+        first_text = ""
+        for item in session.transcript or []:
+            if not isinstance(item, dict) or item.get("role") != "user":
+                continue
+            text = str(item.get("text") or "").strip()
+            if not text:
+                continue
+            lowered = text.lower()
+            if lowered.startswith("hello, i'm ready to begin") or lowered.startswith(
+                "hello, i\u2019m ready to begin"
+            ):
+                continue
+            first_text = text
+            break
+
+        if not first_text:
+            continue
+
+        history.append(
+            {
+                "session_id": session.pk,
+                "text": first_text,
+            }
+        )
+        if len(history) >= limit:
+            return history
+    return history
+
+
 @login_required(login_url="login")
 def assistant_page(request):
     recent_sessions = (
@@ -121,10 +158,64 @@ def assistant_page(request):
         "text_model": services.text_model(),
         "max_seconds": services.max_session_seconds(),
         "recent_sessions": recent_sessions,
+        "search_history": _search_history(request.user),
         "skin_topics": SKIN_TOPICS,
         "greeting": GREETING_TEXT,
     }
     return render(request, "assistant/live_assistant.html", context)
+
+
+@login_required(login_url="login")
+def session_detail(request, session_id):
+    session = _get_session(request.user, session_id)
+    if session is None:
+        return JsonResponse({"error": "Conversation not found."}, status=404)
+
+    if request.GET.get("resume") == "1" and session.status != "active":
+        session.status = "active"
+        session.ended_at = None
+        session.save(update_fields=["status", "ended_at", "updated_at"])
+
+    analysis_url = ""
+    if session.skin_analysis_id:
+        analysis_url = reverse(
+            "assessment_detail", args=[session.skin_analysis_id]
+        )
+
+    return JsonResponse(
+        {
+            "success": True,
+            "session_id": session.pk,
+            "mode": session.mode,
+            "mode_label": session.get_mode_display(),
+            "status": session.status,
+            "status_label": session.get_status_display(),
+            "transcript": services.sanitise_transcript(session.transcript),
+            "assessment": session.assessment or {},
+            "analysis_url": analysis_url,
+            "max_seconds": services.max_session_seconds(),
+            "started_at": session.started_at.isoformat(),
+            "ended_at": session.ended_at.isoformat() if session.ended_at else None,
+        }
+    )
+
+
+@login_required(login_url="login")
+@require_POST
+def remove_history_entry(request):
+    payload = _json_body(request)
+    if payload is None:
+        return JsonResponse({"error": "Invalid request."}, status=400)
+
+    session = _get_session(request.user, payload.get("session_id"))
+    if session is None:
+        return JsonResponse({"error": "Conversation not found."}, status=404)
+
+    if not session.hidden_from_history:
+        session.hidden_from_history = True
+        session.save(update_fields=["hidden_from_history", "updated_at"])
+
+    return JsonResponse({"success": True})
 
 
 @login_required(login_url="login")
