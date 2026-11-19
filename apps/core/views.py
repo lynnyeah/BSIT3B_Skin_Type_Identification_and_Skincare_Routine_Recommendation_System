@@ -1310,8 +1310,8 @@ def skin_progress_history(request):
         'chart_data': chart_data,
         'journey_explanation': journey_explanation,
         'routine_helping': routine_helping,
-        # Daily check-ins
-        'checkin_list': all_checkins[:20],
+        # Daily check-ins (filtered by the selected range)
+        'checkin_list': range_checkins.order_by('-date')[:20],
         'condition_choices': DailyCheckIn.CONDITION_CHOICES,
         'rating_descriptions': RATING_DESCRIPTIONS,
         'rating_labels': {

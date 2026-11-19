@@ -40,7 +40,7 @@
   </div>
   {% endif %}
 
-  <div class="assistant-workspace is-history-collapsed" id="assistant-workspace">
+  <div class="assistant-workspace" id="assistant-workspace">
     <div class="assistant-workspace-main">
       <section class="assistant-panel assistant-conversation" id="conversation-panel">
         <div class="assistant-conversation-head">
@@ -49,7 +49,6 @@
             <span id="status-text">Connecting&hellip;</span>
           </div>
           <div class="assistant-conversation-meta">
-            <span class="assistant-chip" id="mode-label">Text</span>
             <span class="assistant-chip assistant-timer" id="timer" hidden>
               <i class="fa-regular fa-clock"></i>
               <span id="timer-text">14:00</span>
@@ -58,10 +57,54 @@
               <i class="fa-solid fa-microphone"></i>
               <span class="visually-hidden">Mute microphone</span>
             </button>
-            <button type="button" class="assistant-btn assistant-btn-ghost assistant-new-chat" id="new-chat-btn">
-              <i class="fa-solid fa-plus"></i>
-              <span>New chat</span>
-            </button>
+            <div class="assistant-menu" id="assistant-menu">
+              <button type="button" class="assistant-icon-btn assistant-menu-toggle" id="history-toggle" aria-expanded="false" aria-controls="search-history" aria-haspopup="true" title="More options">
+                <i class="fa-solid fa-ellipsis-vertical"></i>
+                <span class="visually-hidden">More options</span>
+              </button>
+              <div class="assistant-menu-panel" id="search-history" aria-label="Assistant options">
+                <button type="button" class="assistant-menu-item" id="new-chat-btn">
+                  <i class="fa-solid fa-plus"></i>
+                  <span>New chat</span>
+                </button>
+                <div class="assistant-menu-history">
+                  <div class="assistant-menu-history-head">
+                    <span class="assistant-menu-label"><i class="fa-solid fa-clock-rotate-left"></i> Search history</span>
+                    <span class="assistant-chip assistant-chip-soft" id="search-history-count"{% if not search_history %} hidden{% endif %}>
+                      <i class="fa-solid fa-magnifying-glass"></i>
+                      <span>{{ search_history|length|default:0 }} recent</span>
+                    </span>
+                  </div>
+                  <div class="assistant-history-sidebar-body" id="search-history-body">
+                    {% if search_history %}
+                    <ul class="assistant-search-history-list">
+                      {% for item in search_history %}
+                      <li class="assistant-search-history-entry">
+                        <button type="button" class="assistant-search-history-item" data-session-id="{{ item.session_id }}">
+                          <span class="assistant-search-history-icon" aria-hidden="true">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                          </span>
+                          <span class="assistant-search-history-copy">
+                            <span class="assistant-search-history-text">{{ item.text|truncatechars:180 }}</span>
+                          </span>
+                          <i class="fa-solid fa-chevron-right assistant-search-history-chevron" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="assistant-search-history-remove" data-session-id="{{ item.session_id }}" title="Remove from history" aria-label="Remove conversation from history">
+                          <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                        </button>
+                      </li>
+                      {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="assistant-search-history-empty">
+                      <i class="fa-regular fa-clock" aria-hidden="true"></i>
+                      No searches yet. Your questions to SkinSync AI will appear here.
+                    </p>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -132,49 +175,6 @@
         </div>
       </section>
     </div>
-
-    <aside class="assistant-panel assistant-search-history assistant-history-sidebar is-collapsed" id="search-history" aria-label="Search history">
-      <button type="button" class="assistant-history-toggle" id="history-toggle" aria-expanded="false" aria-controls="search-history-body" title="Expand search history">
-        <i class="fa-solid fa-clock-rotate-left"></i>
-        <span class="assistant-history-toggle-label">Search history</span>
-        <i class="fa-solid fa-chevron-left assistant-history-toggle-chevron" aria-hidden="true"></i>
-      </button>
-
-      <div class="assistant-history-sidebar-body" id="search-history-body">
-        <div class="assistant-panel-head">
-          <span class="assistant-chip assistant-chip-soft" id="search-history-count"{% if not search_history %} hidden{% endif %}>
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <span>{{ search_history|length|default:0 }} recent</span>
-          </span>
-        </div>
-
-        {% if search_history %}
-        <ul class="assistant-search-history-list">
-          {% for item in search_history %}
-          <li class="assistant-search-history-entry">
-            <button type="button" class="assistant-search-history-item" data-session-id="{{ item.session_id }}">
-              <span class="assistant-search-history-icon" aria-hidden="true">
-                <i class="fa-solid fa-magnifying-glass"></i>
-              </span>
-              <span class="assistant-search-history-copy">
-                <span class="assistant-search-history-text">{{ item.text|truncatechars:180 }}</span>
-              </span>
-              <i class="fa-solid fa-chevron-right assistant-search-history-chevron" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="assistant-search-history-remove" data-session-id="{{ item.session_id }}" title="Remove from history" aria-label="Remove conversation from history">
-              <i class="fa-solid fa-trash" aria-hidden="true"></i>
-            </button>
-          </li>
-          {% endfor %}
-        </ul>
-        {% else %}
-        <p class="assistant-search-history-empty">
-          <i class="fa-regular fa-clock" aria-hidden="true"></i>
-          No searches yet. Your questions to SkinSync AI will appear here.
-        </p>
-        {% endif %}
-      </div>
-    </aside>
   </div>
 </div>
 

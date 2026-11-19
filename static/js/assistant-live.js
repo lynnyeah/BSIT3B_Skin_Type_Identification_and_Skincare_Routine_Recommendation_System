@@ -221,25 +221,13 @@
     return resume ? url + "?resume=1" : url;
   }
 
-  function setHistoryExpanded(expanded) {
-    if (els.workspace) {
-      els.workspace.classList.toggle("is-history-collapsed", !expanded);
-    }
+  function setHistoryMenuOpen(open) {
     if (els.historySidebar) {
-      els.historySidebar.classList.toggle("is-collapsed", !expanded);
+      els.historySidebar.classList.toggle("is-open", open);
     }
     if (els.historyToggle) {
-      els.historyToggle.setAttribute("aria-expanded", expanded ? "true" : "false");
-      els.historyToggle.title = expanded
-        ? "Minimize search history"
-        : "Expand search history";
-      var chevron = els.historyToggle.querySelector(
-        ".assistant-history-toggle-chevron"
-      );
-      if (chevron) {
-        chevron.classList.toggle("fa-chevron-right", expanded);
-        chevron.classList.toggle("fa-chevron-left", !expanded);
-      }
+      els.historyToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      els.historyToggle.title = open ? "Close options" : "More options";
     }
   }
 
@@ -2036,13 +2024,45 @@
     els.muteBtn.addEventListener("click", toggleMute);
   }
   if (els.newChatBtn) {
-    els.newChatBtn.addEventListener("click", startNewChat);
-  }
-  if (els.historyToggle) {
-    els.historyToggle.addEventListener("click", function () {
-      setHistoryExpanded(els.historySidebar.classList.contains("is-collapsed"));
+    els.newChatBtn.addEventListener("click", function () {
+      setHistoryMenuOpen(false);
+      startNewChat();
     });
   }
+  if (els.historyToggle) {
+    els.historyToggle.addEventListener("click", function (event) {
+      event.stopPropagation();
+      setHistoryMenuOpen(
+        !els.historySidebar.classList.contains("is-open")
+      );
+    });
+  }
+
+  document.addEventListener("click", function (event) {
+    if (!els.historySidebar || !els.historySidebar.classList.contains("is-open")) {
+      return;
+    }
+    if (els.historySidebar.contains(event.target)) {
+      return;
+    }
+    if (els.historyToggle && els.historyToggle.contains(event.target)) {
+      return;
+    }
+    setHistoryMenuOpen(false);
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "Escape") {
+      return;
+    }
+    if (!els.historySidebar || !els.historySidebar.classList.contains("is-open")) {
+      return;
+    }
+    setHistoryMenuOpen(false);
+    if (els.historyToggle) {
+      els.historyToggle.focus();
+    }
+  });
   if (els.textForm) {
     els.textForm.addEventListener("submit", sendTextMessage);
   }
@@ -2075,6 +2095,7 @@
       }
       var sessionId = button.getAttribute("data-session-id");
       if (sessionId) {
+        setHistoryMenuOpen(false);
         openHistoryConversation(sessionId);
       }
     });

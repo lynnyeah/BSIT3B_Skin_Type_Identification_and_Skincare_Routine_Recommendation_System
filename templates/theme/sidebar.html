@@ -40,22 +40,22 @@
         </li>
 
         <li class="nav-item">
-          <a class="nav-link {% if request.resolver_match.url_name == 'skin_analysis' or request.resolver_match.url_name == 'analysis' %}active{% endif %}"
-             href="{% url 'skin_analysis' %}">
-            <span class="nav-link-icon d-md-none d-lg-inline-block">
-              <i class="fa-solid fa-magnifying-glass"></i>
-            </span>
-            <span class="nav-link-title">Skin Analysis</span>
-          </a>
-        </li>
-
-        <li class="nav-item">
           <a class="nav-link {% if request.resolver_match.namespace == 'assistant' %}active{% endif %}"
              href="{% url 'assistant:page' %}">
             <span class="nav-link-icon d-md-none d-lg-inline-block">
               <i class="fa-solid fa-comment-dots"></i>
             </span>
             <span class="nav-link-title">AI Assistant</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'skin_analysis' or request.resolver_match.url_name == 'analysis' %}active{% endif %}"
+             href="{% url 'skin_analysis' %}">
+            <span class="nav-link-icon d-md-none d-lg-inline-block">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </span>
+            <span class="nav-link-title">Skin Analysis</span>
           </a>
         </li>
 
